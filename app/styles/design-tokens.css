@@ -1,0 +1,126 @@
+/* Design Tokens - Extracted from Next.js homepage */
+/* These tokens serve as the single source of truth for the entire application */
+
+:root {
+  /* Primary Colors */
+  --primary: oklch(0.62 0.19 270);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0.01 270);
+  --secondary-foreground: oklch(0.15 0 0);
+  --accent: oklch(0.62 0.19 270);
+  --accent-foreground: oklch(1 0 0);
+
+  /* Background & Surface */
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.15 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0 0);
+
+  /* Muted Colors */
+  --muted: oklch(0.96 0.01 270);
+  --muted-foreground: oklch(0.5 0.02 270);
+
+  /* Destructive Colors */
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+
+  /* Borders & Inputs */
+  --border: oklch(0.9 0.01 270);
+  --input: oklch(0.9 0.01 270);
+  --ring: oklch(0.62 0.19 270);
+
+  /* Charts */
+  --chart-1: oklch(0.62 0.19 270);
+  --chart-2: oklch(0.7 0.15 300);
+  --chart-3: oklch(0.55 0.2 250);
+  --chart-4: oklch(0.75 0.12 280);
+  --chart-5: oklch(0.65 0.18 260);
+
+  /* Layout */
+  --radius: 0.75rem;
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Typography */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Dark Mode */
+.dark {
+  --background: oklch(0.12 0.01 270);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.15 0.01 270);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.15 0.01 270);
+  --popover-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.62 0.19 270);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.2 0.02 270);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.2 0.02 270);
+  --muted-foreground: oklch(0.65 0.03 270);
+  --accent: oklch(0.62 0.19 270);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.5 0.2 27);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.25 0.02 270);
+  --input: oklch(0.25 0.02 270);
+  --ring: oklch(0.62 0.19 270);
+  --chart-1: oklch(0.62 0.19 270);
+  --chart-2: oklch(0.7 0.15 300);
+  --chart-3: oklch(0.55 0.2 250);
+  --chart-4: oklch(0.75 0.12 280);
+  --chart-5: oklch(0.65 0.18 260);
+  --sidebar: oklch(0.145 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+/* Design Token Utilities */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Component-specific tokens */
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+  
+  .card {
+    @apply bg-card text-card-foreground border border-border rounded-lg;
+  }
+  
+  .input {
+    @apply bg-input border border-input rounded-md;
+  }
+}
