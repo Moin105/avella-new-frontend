@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTenant } from '../contexts/TenantContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LogOut, User, Home, Calendar, Users, Scissors, Settings, Zap, BarChart3, Bug, TestTube } from 'lucide-react';
+import { Loader2, LogOut, User, Home, Calendar, Users, Scissors, Settings, Zap, BarChart3, Bug, TestTube, BookOpen } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 interface DashboardLayoutProps {
@@ -20,7 +20,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navigationItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
-    { href: '/dashboard/bookings', label: 'Bookings', icon: Calendar },
+    { href: '/dashboard/bookings', label: 'Bookings', icon: BookOpen },
     { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
     { href: '/dashboard/clients', label: 'Clients', icon: Users },
     { href: '/dashboard/barbers', label: 'Barbers', icon: Scissors },
@@ -56,7 +56,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Sidebar - Fixed */}
         <div className="w-64 bg-card border-r border-border flex flex-col">
           <div className="p-6 flex-shrink-0">
-            <h2 className="text-xl font-semibold">Avella AI</h2>
+
           </div>
           <nav className="flex-1 px-4 pb-4 overflow-y-auto">
             <div className="space-y-1">
@@ -133,7 +133,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Sidebar - Fixed */}
       <div className="w-64 bg-card border-r border-border flex flex-col">
         <div className="p-6 flex-shrink-0">
-          <h2 className="text-xl font-semibold">Avella AI</h2>
+          <div className="flex items-center gap-3">
+            <img src="/avella-logo-icon.png" alt="Avella AI" className="h-8 w-8" />
+            <h2 className="text-xl font-semibold">Avella AI</h2>
+          </div>
         </div>
         <nav className="flex-1 px-4 pb-4 overflow-y-auto">
           <div className="space-y-1">
