@@ -36,7 +36,7 @@ const Step5ServicesEnhanced: React.FC<Step5ServicesEnhancedProps> = ({ data, onU
     description: '',
     duration: 30,
     price: 0,
-    category: 'Hair',
+    category: 'Men\'s Haircuts',
     isActive: true
   });
 
@@ -46,7 +46,8 @@ const Step5ServicesEnhanced: React.FC<Step5ServicesEnhancedProps> = ({ data, onU
 
   // Predefined service categories with checkboxes
   const serviceCategories = {
-    'Haircuts': [
+    // Men's Services
+    'Men\'s Haircuts': [
       { name: 'Regular Cut', defaultPrice: 25, defaultDuration: 30 },
       { name: 'Skin Fade', defaultPrice: 30, defaultDuration: 45 },
       { name: 'Taper', defaultPrice: 25, defaultDuration: 30 },
@@ -54,53 +55,87 @@ const Step5ServicesEnhanced: React.FC<Step5ServicesEnhancedProps> = ({ data, onU
       { name: 'Buzz Cut', defaultPrice: 20, defaultDuration: 20 },
       { name: 'Head Shave', defaultPrice: 15, defaultDuration: 15 }
     ],
-    'Beard/Grooming': [
+    'Men\'s Beard/Grooming': [
       { name: 'Beard Trim', defaultPrice: 15, defaultDuration: 20 },
       { name: 'Hot Towel Shave', defaultPrice: 25, defaultDuration: 30 },
       { name: 'Line-Up/Shape-Up', defaultPrice: 15, defaultDuration: 15 },
       { name: 'Nose/Ear Wax', defaultPrice: 10, defaultDuration: 10 },
       { name: 'Eyebrow Clean-up', defaultPrice: 10, defaultDuration: 10 }
     ],
-    'Combos': [
+    'Men\'s Combos': [
       { name: 'Haircut + Beard', defaultPrice: 35, defaultDuration: 50 },
       { name: 'Haircut + Hot Towel Shave', defaultPrice: 40, defaultDuration: 60 },
       { name: 'Kid\'s Cut + Design', defaultPrice: 20, defaultDuration: 30 }
     ],
-    'Styling/Finish': [
+    'Men\'s Styling/Finish': [
       { name: 'Wash & Style', defaultPrice: 20, defaultDuration: 30 },
       { name: 'Blow-Dry', defaultPrice: 15, defaultDuration: 20 },
       { name: 'Straight Razor Finish', defaultPrice: 10, defaultDuration: 10 },
       { name: 'Enhancements (fibers/pencil)', defaultPrice: 15, defaultDuration: 15 }
     ],
-    'Color/Chemical': [
-      { name: 'Grey Coverage', defaultPrice: 50, defaultDuration: 60 },
-      { name: 'Full Color', defaultPrice: 60, defaultDuration: 90 },
-      { name: 'Highlights', defaultPrice: 80, defaultDuration: 120 },
-      { name: 'Beard Color', defaultPrice: 30, defaultDuration: 45 },
-      { name: 'Perm', defaultPrice: 100, defaultDuration: 180 },
-      { name: 'Keratin/Treatment', defaultPrice: 120, defaultDuration: 150 }
+    
+    // Women's Services
+    'Women\'s Haircuts': [
+      { name: 'Women\'s Regular Cut', defaultPrice: 40, defaultDuration: 45 },
+      { name: 'Women\'s Scissor Cut', defaultPrice: 50, defaultDuration: 60 },
+      { name: 'Women\'s Bob Cut', defaultPrice: 45, defaultDuration: 50 },
+      { name: 'Women\'s Pixie Cut', defaultPrice: 40, defaultDuration: 45 },
+      { name: 'Women\'s Layered Cut', defaultPrice: 55, defaultDuration: 70 },
+      { name: 'Women\'s Bangs Trim', defaultPrice: 15, defaultDuration: 20 }
     ],
-    'Specialty': [
-      { name: 'Designs (hair art)', defaultPrice: 40, defaultDuration: 60 },
-      { name: 'Loc Maintenance', defaultPrice: 35, defaultDuration: 45 },
-      { name: 'Braids', defaultPrice: 50, defaultDuration: 90 },
-      { name: 'Twists', defaultPrice: 45, defaultDuration: 75 },
-      { name: 'Silk Press', defaultPrice: 60, defaultDuration: 120 },
-      { name: 'Extensions (install)', defaultPrice: 200, defaultDuration: 240 }
+    'Women\'s Styling/Finish': [
+      { name: 'Women\'s Wash & Style', defaultPrice: 60, defaultDuration: 75 },
+      { name: 'Women\'s Blow-Dry', defaultPrice: 35, defaultDuration: 45 },
+      { name: 'Women\'s Curl Set', defaultPrice: 50, defaultDuration: 60 },
+      { name: 'Women\'s Updo', defaultPrice: 70, defaultDuration: 90 },
+      { name: 'Women\'s Wedding Style', defaultPrice: 120, defaultDuration: 150 },
+      { name: 'Women\'s Special Occasion', defaultPrice: 80, defaultDuration: 100 }
     ],
+    'Women\'s Color/Chemical': [
+      { name: 'Women\'s Full Color', defaultPrice: 120, defaultDuration: 120 },
+      { name: 'Women\'s Highlights', defaultPrice: 150, defaultDuration: 150 },
+      { name: 'Women\'s Balayage', defaultPrice: 180, defaultDuration: 180 },
+      { name: 'Women\'s Ombre', defaultPrice: 160, defaultDuration: 160 },
+      { name: 'Women\'s Root Touch-up', defaultPrice: 80, defaultDuration: 60 },
+      { name: 'Women\'s Color Correction', defaultPrice: 200, defaultDuration: 240 },
+      { name: 'Women\'s Perm', defaultPrice: 100, defaultDuration: 180 },
+      { name: 'Women\'s Keratin Treatment', defaultPrice: 200, defaultDuration: 180 },
+      { name: 'Women\'s Brazilian Blowout', defaultPrice: 250, defaultDuration: 240 }
+    ],
+    'Women\'s Specialty': [
+      { name: 'Women\'s Braids', defaultPrice: 80, defaultDuration: 120 },
+      { name: 'Women\'s Twists', defaultPrice: 70, defaultDuration: 100 },
+      { name: 'Women\'s Silk Press', defaultPrice: 70, defaultDuration: 90 },
+      { name: 'Women\'s Loc Maintenance', defaultPrice: 60, defaultDuration: 90 },
+      { name: 'Women\'s Extensions (install)', defaultPrice: 200, defaultDuration: 240 },
+      { name: 'Women\'s Weave Install', defaultPrice: 150, defaultDuration: 180 },
+      { name: 'Women\'s Hair Art/Designs', defaultPrice: 60, defaultDuration: 90 }
+    ],
+    'Women\'s Treatments': [
+      { name: 'Women\'s Deep Conditioning', defaultPrice: 40, defaultDuration: 60 },
+      { name: 'Women\'s Hair Mask Treatment', defaultPrice: 50, defaultDuration: 75 },
+      { name: 'Women\'s Scalp Treatment', defaultPrice: 60, defaultDuration: 90 },
+      { name: 'Women\'s Hair Repair Treatment', defaultPrice: 80, defaultDuration: 120 },
+      { name: 'Women\'s Protein Treatment', defaultPrice: 70, defaultDuration: 100 }
+    ],
+    
+    // Unisex Services
     'Kids': [
-      { name: 'Kid\'s Cut (under 12)', defaultPrice: 15, defaultDuration: 20 },
-      { name: 'Kid\'s Skin Fade', defaultPrice: 20, defaultDuration: 30 },
-      { name: 'Kid\'s Design', defaultPrice: 25, defaultDuration: 35 }
+      { name: 'Kid\'s Cut (under 12)', defaultPrice: 20, defaultDuration: 30 },
+      { name: 'Kid\'s Skin Fade', defaultPrice: 25, defaultDuration: 35 },
+      { name: 'Kid\'s Design', defaultPrice: 30, defaultDuration: 40 },
+      { name: 'Girl\'s Haircut', defaultPrice: 25, defaultDuration: 35 },
+      { name: 'Girl\'s Styling', defaultPrice: 35, defaultDuration: 45 }
     ],
     'Add-Ons': [
-      { name: 'Shampoo', defaultPrice: 5, defaultDuration: 10 },
-      { name: 'Steam/Facial', defaultPrice: 15, defaultDuration: 20 },
-      { name: 'Black Mask', defaultPrice: 20, defaultDuration: 30 },
-      { name: 'Beard Hot Towel', defaultPrice: 10, defaultDuration: 15 },
-      { name: 'Scalp Massage', defaultPrice: 15, defaultDuration: 20 },
-      { name: 'Neck Cleanup', defaultPrice: 5, defaultDuration: 5 },
-      { name: 'Enhancement Add-On', defaultPrice: 10, defaultDuration: 10 }
+      { name: 'Shampoo', defaultPrice: 10, defaultDuration: 15 },
+      { name: 'Steam/Facial', defaultPrice: 25, defaultDuration: 30 },
+      { name: 'Black Mask', defaultPrice: 30, defaultDuration: 45 },
+      { name: 'Beard Hot Towel', defaultPrice: 15, defaultDuration: 20 },
+      { name: 'Scalp Massage', defaultPrice: 20, defaultDuration: 25 },
+      { name: 'Neck Cleanup', defaultPrice: 10, defaultDuration: 10 },
+      { name: 'Eyebrow Shaping', defaultPrice: 15, defaultDuration: 20 },
+      { name: 'Facial Hair Removal', defaultPrice: 20, defaultDuration: 30 }
     ]
   };
 
@@ -138,7 +173,7 @@ const Step5ServicesEnhanced: React.FC<Step5ServicesEnhancedProps> = ({ data, onU
       description: '',
       duration: 30,
       price: 0,
-      category: 'Hair',
+      category: 'Men\'s Haircuts',
       isActive: true
     });
     setShowAddForm(false);

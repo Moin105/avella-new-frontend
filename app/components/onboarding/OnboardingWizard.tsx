@@ -48,7 +48,30 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, onClose
   const [showFinalReview, setShowFinalReview] = useState(false);
   const { user } = useAuth();
 
-  const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api`;
+  // Determine the correct API base URL based on environment
+  const getApiUrl = () => {
+    // Check if we're in production by looking at the hostname
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      if (hostname.includes('vercel.app') || hostname.includes('avella') || hostname !== 'localhost') {
+        return `${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://avella-backend-production.up.railway.app'}/api`;
+      }
+    }
+    
+    // Fallback to environment variable or localhost
+    return `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api`;
+  };
+  
+  const API_URL = getApiUrl();
+  
+  // Debug logging for production
+  console.log('OnboardingWizard API URL Detection:', {
+    hostname: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
+    NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+    detectedApiUrl: API_URL,
+    isVercel: typeof window !== 'undefined' ? window.location.hostname.includes('vercel.app') : false
+  });
 
   const steps = [
     { id: 1, title: 'Business Basics', icon: Building, component: Step1BusinessBasics },

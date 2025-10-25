@@ -28,13 +28,160 @@ interface Service {
 const Step5Services: React.FC<Step5ServicesProps> = ({ data, onUpdate, onNext, onBack }) => {
   const [services, setServices] = useState<Service[]>(
     data?.services || [
+      // Men's Services
       {
         id: '1',
-        name: 'Haircut',
-        description: 'Professional haircut service',
+        name: 'Regular Cut',
+        description: 'Professional men\'s haircut service',
         duration: 30,
         price: 25,
-        category: 'Hair',
+        category: 'Men\'s Haircuts',
+        isActive: true
+      },
+      {
+        id: '2',
+        name: 'Skin Fade',
+        description: 'Professional skin fade haircut',
+        duration: 45,
+        price: 35,
+        category: 'Men\'s Haircuts',
+        isActive: true
+      },
+      {
+        id: '3',
+        name: 'Beard Trim',
+        description: 'Professional beard trimming and styling',
+        duration: 20,
+        price: 15,
+        category: 'Men\'s Beard/Grooming',
+        isActive: true
+      },
+      {
+        id: '4',
+        name: 'Hot Towel Shave',
+        description: 'Traditional hot towel shave service',
+        duration: 30,
+        price: 25,
+        category: 'Men\'s Beard/Grooming',
+        isActive: true
+      },
+      {
+        id: '5',
+        name: 'Haircut + Beard',
+        description: 'Combined haircut and beard service',
+        duration: 50,
+        price: 35,
+        category: 'Men\'s Combos',
+        isActive: true
+      },
+      
+      // Women's Services
+      {
+        id: '6',
+        name: 'Women\'s Haircut',
+        description: 'Professional women\'s haircut service',
+        duration: 45,
+        price: 40,
+        category: 'Women\'s Haircuts',
+        isActive: true
+      },
+      {
+        id: '7',
+        name: 'Women\'s Scissor Cut',
+        description: 'Precision scissor cut for women',
+        duration: 60,
+        price: 50,
+        category: 'Women\'s Haircuts',
+        isActive: true
+      },
+      {
+        id: '8',
+        name: 'Wash & Style',
+        description: 'Hair wash and professional styling',
+        duration: 75,
+        price: 60,
+        category: 'Women\'s Styling/Finish',
+        isActive: true
+      },
+      {
+        id: '9',
+        name: 'Blow-Dry',
+        description: 'Professional blow-dry styling',
+        duration: 45,
+        price: 35,
+        category: 'Women\'s Styling/Finish',
+        isActive: true
+      },
+      {
+        id: '10',
+        name: 'Full Color',
+        description: 'Complete hair coloring service',
+        duration: 120,
+        price: 120,
+        category: 'Women\'s Color/Chemical',
+        isActive: true
+      },
+      {
+        id: '11',
+        name: 'Highlights',
+        description: 'Professional hair highlighting',
+        duration: 150,
+        price: 150,
+        category: 'Women\'s Color/Chemical',
+        isActive: true
+      },
+      {
+        id: '12',
+        name: 'Keratin Treatment',
+        description: 'Smoothing keratin treatment',
+        duration: 180,
+        price: 200,
+        category: 'Women\'s Color/Chemical',
+        isActive: true
+      },
+      {
+        id: '13',
+        name: 'Braids',
+        description: 'Professional braiding service',
+        duration: 120,
+        price: 80,
+        category: 'Women\'s Specialty',
+        isActive: true
+      },
+      {
+        id: '14',
+        name: 'Silk Press',
+        description: 'Silk press straightening service',
+        duration: 90,
+        price: 70,
+        category: 'Women\'s Specialty',
+        isActive: true
+      },
+      {
+        id: '15',
+        name: 'Kid\'s Cut (under 12)',
+        description: 'Children\'s haircut service',
+        duration: 30,
+        price: 20,
+        category: 'Kids',
+        isActive: true
+      },
+      {
+        id: '16',
+        name: 'Shampoo',
+        description: 'Professional shampoo service',
+        duration: 15,
+        price: 10,
+        category: 'Add-Ons',
+        isActive: true
+      },
+      {
+        id: '17',
+        name: 'Scalp Massage',
+        description: 'Relaxing scalp massage',
+        duration: 20,
+        price: 15,
+        category: 'Add-Ons',
         isActive: true
       }
     ]
@@ -45,14 +192,31 @@ const Step5Services: React.FC<Step5ServicesProps> = ({ data, onUpdate, onNext, o
     description: '',
     duration: 30,
     price: 0,
-    category: 'Hair',
+    category: 'Men\'s Haircuts',
     isActive: true
   });
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [errors, setErrors] = useState<any>({});
 
-  const categories = ['Hair', 'Beard', 'Styling', 'Treatment', 'Other'];
+  const categories = [
+    // Men's Categories
+    'Men\'s Haircuts',
+    'Men\'s Beard/Grooming',
+    'Men\'s Combos',
+    'Men\'s Styling/Finish',
+    
+    // Women's Categories
+    'Women\'s Haircuts',
+    'Women\'s Styling/Finish',
+    'Women\'s Color/Chemical',
+    'Women\'s Specialty',
+    
+    // Unisex Categories
+    'Kids',
+    'Add-Ons',
+    'Other'
+  ];
 
   const addService = () => {
     if (!newService.name?.trim()) {
@@ -86,7 +250,7 @@ const Step5Services: React.FC<Step5ServicesProps> = ({ data, onUpdate, onNext, o
       description: '',
       duration: 30,
       price: 0,
-      category: 'Hair',
+      category: 'Men\'s Haircuts',
       isActive: true
     });
     setShowAddForm(false);

@@ -29,7 +29,22 @@ class ApiClient {
   private token: string | null = null;
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api';
+    // Determine the correct API base URL based on environment
+    const getApiUrl = () => {
+      // Check if we're in production by looking at the hostname
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        if (hostname.includes('vercel.app') || hostname.includes('avella') || hostname !== 'localhost') {
+          return process.env.NEXT_PUBLIC_API_BASE || 'https://avella-backend-production.up.railway.app/api';
+        }
+      }
+      
+      // Fallback to environment variable or localhost
+      return process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api';
+    };
+    
+    this.baseURL = getApiUrl();
+    
     this.mockMode = process.env.NEXT_PUBLIC_MOCK === 'true' || 
                    (typeof window !== 'undefined' && localStorage.getItem('mock_mode') === 'true');
     
@@ -38,6 +53,9 @@ class ApiClient {
       baseURL: this.baseURL,
       mockMode: this.mockMode,
       NODE_ENV: process.env.NODE_ENV,
+      hostname: typeof window !== 'undefined' ? window.location.hostname : 'server-side',
+      isVercel: typeof window !== 'undefined' ? window.location.hostname.includes('vercel.app') : false,
+      NEXT_PUBLIC_API_BASE: process.env.NEXT_PUBLIC_API_BASE,
       localStorage_mock_mode: typeof window !== 'undefined' ? localStorage.getItem('mock_mode') : 'N/A'
     });
     
