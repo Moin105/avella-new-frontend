@@ -4,6 +4,51 @@ import React, { useState, useEffect } from 'react';
 import { useTenant } from '../../contexts/TenantContext';
 import { apiClient } from '../../lib/api';
 import { convertToTenantTimezone } from '../../lib/timezone';
+
+// Type definitions
+interface Appointment {
+  id: string;
+  start_time: string;
+  end_time: string;
+  customer?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+  };
+  service?: {
+    name?: string;
+  };
+  barber?: {
+    name?: string;
+  };
+  barber_id?: string;
+  service_id?: string;
+  status: string;
+  notes?: string;
+  time?: string;
+  displayTime?: string;
+}
+
+interface Barber {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface Service {
+  id: string;
+  name: string;
+}
+
+interface Client {
+  id: string;
+  name: string;
+}
+
+interface Tenant {
+  id: string;
+  timezone?: string;
+}
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -32,16 +77,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 const EnhancedCalendarView = () => {
   const { currentTenant } = useTenant();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState('day'); // 'day', 'week', 'month'
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
   const [selectedBarber, setSelectedBarber] = useState('all');
-  const [appointments, setAppointments] = useState([]);
-  const [barbers, setBarbers] = useState([{ id: 'all', name: 'All Barbers', color: '#3B82F6' }]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [barbers, setBarbers] = useState<Barber[]>([{ id: 'all', name: 'All Barbers', color: '#3B82F6' }]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<{
+    date: Date;
+    time: Date;
+    fullTime: string;
+    hour: number;
+    minute: number;
+  } | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const [appointmentForm, setAppointmentForm] = useState({
     client_name: '',
@@ -53,8 +105,8 @@ const EnhancedCalendarView = () => {
     notes: '',
     send_sms: true
   });
-  const [services, setServices] = useState([]);
-  const [clients, setClients] = useState([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -86,8 +138,8 @@ const EnhancedCalendarView = () => {
 
       if (appointmentsRes.success) {
         hasSuccessfulCall = true;
-        const tenantTimezone = currentTenant?.timezone || 'America/New_York';
-        const processedAppointments = appointmentsRes.data.map((appointment: any) => {
+        const tenantTimezone = (currentTenant as any)?.timezone || 'America/New_York';
+        const processedAppointments = (appointmentsRes.data as Appointment[]).map((appointment: Appointment) => {
           const startTimeConverted = convertToTenantTimezone(appointment.start_time, tenantTimezone);
           const endTimeConverted = convertToTenantTimezone(appointment.end_time, tenantTimezone);
           
@@ -147,7 +199,7 @@ const EnhancedCalendarView = () => {
       
       if (barbersRes.success) {
         hasSuccessfulCall = true;
-        setBarbers([{ id: 'all', name: 'All Barbers', color: '#3B82F6' }, ...barbersRes.data]);
+        setBarbers([{ id: 'all', name: 'All Barbers', color: '#3B82F6' }, ...(barbersRes.data as Barber[])]);
         console.log('Barbers loaded:', barbersRes.data);
       } else {
         console.error('Barbers API error:', barbersRes.error);
@@ -156,7 +208,7 @@ const EnhancedCalendarView = () => {
       
       if (servicesRes.success) {
         hasSuccessfulCall = true;
-        setServices(servicesRes.data);
+        setServices(servicesRes.data as Service[]);
         console.log('Services loaded:', servicesRes.data);
       } else {
         console.error('Services API error:', servicesRes.error);
@@ -164,8 +216,8 @@ const EnhancedCalendarView = () => {
       }
       
       if (appointmentsRes.success) {
-        const map = new Map<string, any>();
-        (appointmentsRes.data as any[]).forEach((a: any) => {
+        const map = new Map<string, Client>();
+        (appointmentsRes.data as Appointment[]).forEach((a: Appointment) => {
           const c = a.customer || {};
           const key = c.email || c.phone || c.name;
           if (!key) return;
@@ -207,12 +259,12 @@ const EnhancedCalendarView = () => {
     return slots;
   };
 
-  const getAppointmentsForDate = (date) => {
+  const getAppointmentsForDate = (date: Date) => {
     return appointments.filter(appointment => {
       const appointmentStart = new Date(appointment.start_time);
       
       // Convert appointment time to tenant timezone for comparison
-      const tenantTimezone = currentTenant?.timezone || 'America/New_York';
+      const tenantTimezone = (currentTenant as any)?.timezone || 'America/New_York';
       const appointmentInTenantTimezone = new Date(appointmentStart.toLocaleString('en-US', { timeZone: tenantTimezone }));
       
       return appointmentInTenantTimezone.toDateString() === date.toDateString() &&
@@ -220,7 +272,7 @@ const EnhancedCalendarView = () => {
     });
   };
 
-  const getAppointmentForSlot = (date, hour, minute) => {
+  const getAppointmentForSlot = (date: Date, hour: number, minute: number) => {
     const slotDate = new Date(date);
     slotDate.setHours(hour, minute, 0, 0);
     
@@ -236,7 +288,7 @@ const EnhancedCalendarView = () => {
       const appointmentEnd = new Date(appointment.end_time);
       
       // Convert appointment time to tenant timezone for comparison
-      const tenantTimezone = currentTenant?.timezone || 'America/New_York';
+      const tenantTimezone = (currentTenant as any)?.timezone || 'America/New_York';
       const appointmentInTenantTimezone = new Date(appointmentStart.toLocaleString('en-US', { timeZone: tenantTimezone }));
       
       console.log('Checking appointment:', {
@@ -281,7 +333,7 @@ const EnhancedCalendarView = () => {
     });
   };
 
-  const handleCreateAppointment = async (e) => {
+  const handleCreateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setFormLoading(true);
@@ -292,7 +344,7 @@ const EnhancedCalendarView = () => {
       }
       
       // Get tenant timezone
-      const tenantTimezone = currentTenant?.timezone || 'America/New_York';
+      const tenantTimezone = (currentTenant as any)?.timezone || 'America/New_York';
       console.log('Tenant timezone:', tenantTimezone);
       
       // Create the appointment date in the tenant's timezone
@@ -388,7 +440,7 @@ const EnhancedCalendarView = () => {
     }
   };
 
-  const handleEditAppointment = (appointment) => {
+  const handleEditAppointment = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setAppointmentForm({
       client_name: appointment.customer?.name || '',
@@ -403,10 +455,11 @@ const EnhancedCalendarView = () => {
     setShowAppointmentModal(true);
   };
 
-  const handleUpdateAppointment = async (e) => {
+  const handleUpdateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setFormLoading(true);
+      if (!selectedAppointment) return;
       const start = new Date(selectedAppointment.start_time);
       const end = new Date(start.getTime() + (appointmentForm.duration || 30) * 60000);
       
@@ -422,10 +475,10 @@ const EnhancedCalendarView = () => {
           notes: appointmentForm.notes || ''
         },
         notes: appointmentForm.notes || '',
-        status: selectedAppointment.status
+        status: selectedAppointment?.status || 'confirmed'
       };
       
-      const response = await apiClient.put(`/appointments/${selectedAppointment.id}`, payload);
+      const response = await apiClient.put(`/appointments/${selectedAppointment?.id}`, payload);
       if (response.success) {
         await loadData(); // Reload data
         setShowAppointmentModal(false);
@@ -438,7 +491,7 @@ const EnhancedCalendarView = () => {
     }
   };
 
-  const handleDeleteAppointment = async (appointmentId) => {
+  const handleDeleteAppointment = async (appointmentId: string) => {
     try {
       const response = await apiClient.delete(`/appointments/${appointmentId}`);
       if (response.success) {
@@ -449,7 +502,7 @@ const EnhancedCalendarView = () => {
     }
   };
 
-  const handleStatusChange = async (appointmentId, newStatus) => {
+  const handleStatusChange = async (appointmentId: string, newStatus: string) => {
     try {
       const response = await apiClient.put(`/appointments/${appointmentId}`, { status: newStatus });
       if (response.success) {
@@ -460,7 +513,25 @@ const EnhancedCalendarView = () => {
     }
   };
 
-  const navigateDate = (direction) => {
+  const handleCancelAppointment = async () => {
+    if (!selectedAppointment) return;
+    
+    try {
+      const response = await apiClient.put(`/appointments/${selectedAppointment.id}`, { 
+        status: 'cancelled' 
+      });
+      if (response.success) {
+        await loadData(); // Reload data
+        setShowAppointmentModal(false);
+        setSelectedAppointment(null);
+        setShowCancelConfirm(false);
+      }
+    } catch (error) {
+      console.error('Error cancelling appointment:', error);
+    }
+  };
+
+  const navigateDate = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
     if (viewMode === 'day') {
       newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
@@ -472,7 +543,7 @@ const EnhancedCalendarView = () => {
     setCurrentDate(newDate);
   };
 
-  const handleSlotClick = (date, hour, minute) => {
+  const handleSlotClick = (date: Date, hour: number, minute: number) => {
     // Create a new date object to avoid mutating the original
     const slotDate = new Date(date);
     slotDate.setHours(hour, minute, 0, 0);
@@ -499,7 +570,7 @@ const EnhancedCalendarView = () => {
     setShowAppointmentModal(true);
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -508,7 +579,7 @@ const EnhancedCalendarView = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'confirmed': return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'cancelled': return <XCircle className="h-4 w-4 text-red-500" />;
@@ -686,6 +757,100 @@ const EnhancedCalendarView = () => {
     );
   };
 
+  const renderMonthView = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const weeks = [];
+    let currentWeek = [];
+
+    // Leading blanks
+    for (let i = 0; i < startingDayOfWeek; i++) currentWeek.push(null);
+
+    // Days
+    for (let day = 1; day <= daysInMonth; day++) {
+      currentWeek.push(new Date(year, month, day));
+      if (currentWeek.length === 7) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+    }
+    
+    // Trailing blanks
+    if (currentWeek.length > 0) {
+      while (currentWeek.length < 7) currentWeek.push(null);
+      weeks.push(currentWeek);
+    }
+
+    return (
+      <div className="flex-1 overflow-auto p-4">
+        <div className="bg-white rounded-lg shadow-sm border">
+          {/* Weekday headers */}
+          <div className="grid grid-cols-7 border-b">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <div key={day} className="p-4 text-center font-semibold text-gray-700 text-sm">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar grid */}
+          <div className="grid grid-rows-auto">
+            {weeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="grid grid-cols-7 border-b last:border-b-0">
+                {week.map((day, dayIndex) => {
+                  if (!day) {
+                    return <div key={dayIndex} className="min-h-[120px] bg-gray-50 border-r last:border-r-0"></div>;
+                  }
+
+                  const dayAppointments = getAppointmentsForDate(day);
+                  const isToday = day.toDateString() === new Date().toDateString();
+
+                  return (
+                    <div 
+                      key={dayIndex} 
+                      className="min-h-[120px] border-r last:border-r-0 p-2 hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => handleSlotClick(day, 9, 0)}
+                    >
+                      <div className={`text-sm font-semibold mb-2 ${
+                        isToday ? 'text-white bg-blue-600 w-7 h-7 rounded-full flex items-center justify-center' : 'text-gray-900'
+                      }`}>
+                        {day.getDate()}
+                      </div>
+                      <div className="space-y-1">
+                        {dayAppointments.slice(0, 3).map(apt => {
+                          if (selectedBarber !== 'all' && apt.barber_id !== selectedBarber) return null;
+                          const barber = barbers.find(b => b.id === apt.barber_id);
+                          return (
+                            <div
+                              key={apt.id}
+                              className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80"
+                              style={{ backgroundColor: barber ? barber.color : '#3B82F6', color: 'white' }}
+                              onClick={(e) => { e.stopPropagation(); handleEditAppointment(apt); }}
+                            >
+                              {apt.displayTime || apt.time} {apt.customer?.name || 'Client'}
+                            </div>
+                          );
+                        })}
+                        {dayAppointments.length > 3 && (
+                          <div className="text-xs text-gray-500 font-medium">+{dayAppointments.length - 3} more</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -702,7 +867,7 @@ const EnhancedCalendarView = () => {
           <p className="text-muted-foreground">Manage your appointments and schedule</p>
         </div>
         <div className="flex space-x-2">
-          <Select value={viewMode} onValueChange={setViewMode}>
+          <Select value={viewMode} onValueChange={(value: 'day' | 'week' | 'month') => setViewMode(value)}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
@@ -719,16 +884,110 @@ const EnhancedCalendarView = () => {
                 New Appointment
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
                 <DialogTitle>
-                  {selectedAppointment ? 'Edit Appointment' : 'New Appointment'}
+                  {selectedAppointment ? 'Appointment Details' : 'New Appointment'}
                 </DialogTitle>
                 <DialogDescription>
-                  {selectedAppointment ? 'Update appointment details' : 'Create a new appointment'}
+                  {selectedAppointment ? 'View and manage appointment details' : 'Create a new appointment'}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={selectedAppointment ? handleUpdateAppointment : handleCreateAppointment} className="space-y-4">
+              {selectedAppointment ? (
+                // View/Edit Existing Appointment
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Client</Label>
+                      <p className="text-gray-900">{selectedAppointment.customer?.name || 'Unknown'}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Service</Label>
+                      <p className="text-gray-900">{selectedAppointment.service?.name || 'Service'}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Barber</Label>
+                      <p className="text-gray-900">{selectedAppointment.barber?.name || 'Unknown'}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Status</Label>
+                      <div className="flex items-center space-x-2">
+                        <Badge className={getStatusColor(selectedAppointment.status)}>
+                          {selectedAppointment.status}
+                        </Badge>
+                        <Select value={selectedAppointment.status} onValueChange={(value) => handleStatusChange(selectedAppointment.id, value)}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="confirmed">Confirmed</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Date</Label>
+                      <p className="text-gray-900">{new Date(selectedAppointment.start_time).toLocaleDateString('en-US', { 
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+                      })}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Time</Label>
+                      <p className="text-gray-900">
+                        {selectedAppointment.displayTime || selectedAppointment.time}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedAppointment.customer?.phone && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Phone</Label>
+                      <p className="text-gray-900">{selectedAppointment.customer.phone}</p>
+                    </div>
+                  )}
+                  {selectedAppointment.customer?.email && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Email</Label>
+                      <p className="text-gray-900">{selectedAppointment.customer.email}</p>
+                    </div>
+                  )}
+                  {selectedAppointment.notes && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">Notes</Label>
+                      <p className="text-gray-900">{selectedAppointment.notes}</p>
+                    </div>
+                  )}
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setShowAppointmentModal(false)}>
+                      Close
+                    </Button>
+                    <Button variant="outline" onClick={() => {
+                      setAppointmentForm({
+                        client_name: selectedAppointment.customer?.name || '',
+                        client_phone: selectedAppointment.customer?.phone || '',
+                        client_email: selectedAppointment.customer?.email || '',
+                        service: selectedAppointment.service_id || '',
+                        barber_id: selectedAppointment.barber_id || '',
+                        duration: Math.max(0, Math.round((new Date(selectedAppointment.end_time).getTime() - new Date(selectedAppointment.start_time).getTime()) / 60000)),
+                        notes: selectedAppointment.notes || '',
+                        send_sms: false
+                      });
+                      setShowAppointmentModal(false);
+                      setShowAppointmentModal(true);
+                    }}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button variant="destructive" onClick={() => setShowCancelConfirm(true)}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Cancel Appointment
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                // Create New Appointment
+                <form onSubmit={handleCreateAppointment} className="space-y-4">
                 {/* Debug info for selected slot */}
                 {selectedSlot && (
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
@@ -822,10 +1081,31 @@ const EnhancedCalendarView = () => {
                   </Button>
                 </div>
               </form>
+              )}
             </DialogContent>
           </Dialog>
         </div>
       </div>
+
+      {/* Cancellation Confirmation Dialog */}
+      <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Appointment</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this appointment? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setShowCancelConfirm(false)}>
+              No, Keep Appointment
+            </Button>
+            <Button variant="destructive" onClick={handleCancelAppointment}>
+              Yes, Cancel Appointment
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
@@ -841,6 +1121,14 @@ const EnhancedCalendarView = () => {
           </h2>
           <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
             <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setCurrentDate(new Date())}
+            className="ml-4"
+          >
+            Today
           </Button>
         </div>
         <Select value={selectedBarber} onValueChange={setSelectedBarber}>
@@ -877,11 +1165,20 @@ const EnhancedCalendarView = () => {
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {viewMode === 'day' && renderDayView()}
         {viewMode === 'week' && renderWeekView()}
-        {viewMode === 'month' && (
-          <div className="p-8 text-center text-muted-foreground">
-            Month view coming soon...
-          </div>
-        )}
+        {viewMode === 'month' && renderMonthView()}
+      </div>
+
+      {/* Legend */}
+      <div className="bg-white border-t p-4 rounded-lg">
+        <div className="flex items-center space-x-6 text-sm">
+          <span className="text-gray-600">Barbers:</span>
+          {barbers.filter(b => b.id !== 'all').map(barber => (
+            <div key={barber.id} className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: barber.color }}></div>
+              <span className="text-gray-700">{barber.name}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

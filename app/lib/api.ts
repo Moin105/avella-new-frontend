@@ -3,6 +3,8 @@
  * Handles authentication, error handling, and request/response interceptors
  */
 
+import { normalizeToUTCString } from './timezone-utils';
+
 interface ApiResponse<T = any> {
   data: T;
   success: boolean;
@@ -28,13 +30,15 @@ class ApiClient {
 
   constructor() {
     this.baseURL = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api';
-    this.mockMode = process.env.NEXT_PUBLIC_MOCK === 'true';
+    this.mockMode = process.env.NEXT_PUBLIC_MOCK === 'true' || 
+                   (typeof window !== 'undefined' && localStorage.getItem('mock_mode') === 'true');
     
     // Debug logging
     console.log('API Client initialized:', {
       baseURL: this.baseURL,
       mockMode: this.mockMode,
-      NODE_ENV: process.env.NODE_ENV
+      NODE_ENV: process.env.NODE_ENV,
+      localStorage_mock_mode: typeof window !== 'undefined' ? localStorage.getItem('mock_mode') : 'N/A'
     });
     
     // Initialize token from localStorage on client side
@@ -43,8 +47,8 @@ class ApiClient {
     }
   }
 
-  private getHeaders(): HeadersInit {
-    const headers: HeadersInit = {
+  private getHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
@@ -78,7 +82,65 @@ class ApiClient {
     }
 
     const data = await response.json();
-    return { data, success: true };
+    
+    // Apply timezone normalization to response data
+    const normalizedData = this.normalizeTimestampsInResponse(data);
+    
+    return { data: normalizedData, success: true };
+  }
+
+  /**
+   * Recursively normalize timestamps in API response data
+   * This ensures all time strings have proper timezone markers
+   */
+  private normalizeTimestampsInResponse(data: any): any {
+    if (!data) return data;
+    
+    if (Array.isArray(data)) {
+      return data.map(item => this.normalizeTimestampsInResponse(item));
+    }
+    
+    if (typeof data === 'object') {
+      const normalized: any = {};
+      for (const [key, value] of Object.entries(data)) {
+        // Check if this is a timestamp field
+        if (this.isTimestampField(key, value)) {
+          normalized[key] = normalizeToUTCString(value as string);
+          console.log(`🕐 Normalized timestamp field ${key}:`, {
+            original: value,
+            normalized: normalized[key]
+          });
+        } else {
+          normalized[key] = this.normalizeTimestampsInResponse(value);
+        }
+      }
+      return normalized;
+    }
+    
+    return data;
+  }
+
+  /**
+   * Check if a field contains a timestamp value
+   */
+  private isTimestampField(key: string, value: any): boolean {
+    if (typeof value !== 'string') return false;
+    
+    // Common timestamp field names
+    const timestampFields = [
+      'start_time', 'end_time', 'created_at', 'updated_at', 
+      'date', 'time', 'timestamp', 'scheduled_at', 'appointment_time'
+    ];
+    
+    // Check if field name suggests it's a timestamp
+    const isTimestampFieldName = timestampFields.some(field => 
+      key.toLowerCase().includes(field.toLowerCase())
+    );
+    
+    // Check if value looks like a timestamp (ISO format)
+    const isTimestampValue = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value);
+    
+    return isTimestampFieldName && isTimestampValue;
   }
 
   private async handleError(error: any): Promise<ApiResponse> {
@@ -390,6 +452,86 @@ class ApiClient {
       ] as T;
     }
 
+    if (endpoint.includes('/appointments')) {
+      // Handle POST requests for creating appointments
+      if (method === 'POST') {
+        return {
+          id: Date.now().toString(),
+          ...data,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as T;
+      }
+      
+      // Handle GET requests for fetching appointments
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      return [
+        {
+          id: '1',
+          start_time: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0).toISOString(),
+          end_time: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30).toISOString(),
+          customer: {
+            name: 'John Smith',
+            phone: '+1234567890',
+            email: 'john@example.com'
+          },
+          service: {
+            name: 'Haircut'
+          },
+          barber: {
+            name: 'Mike Johnson'
+          },
+          barber_id: '1',
+          service_id: '1',
+          status: 'confirmed',
+          notes: 'Regular haircut appointment'
+        },
+        {
+          id: '2',
+          start_time: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 30).toISOString(),
+          end_time: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 11, 0).toISOString(),
+          customer: {
+            name: 'Jane Doe',
+            phone: '+1234567891',
+            email: 'jane@example.com'
+          },
+          service: {
+            name: 'Beard Trim'
+          },
+          barber: {
+            name: 'Mike Johnson'
+          },
+          barber_id: '1',
+          service_id: '2',
+          status: 'confirmed',
+          notes: 'Beard trimming service'
+        },
+        {
+          id: '3',
+          start_time: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 14, 0).toISOString(),
+          end_time: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 14, 30).toISOString(),
+          customer: {
+            name: 'Bob Wilson',
+            phone: '+1234567892',
+            email: 'bob@example.com'
+          },
+          service: {
+            name: 'Haircut'
+          },
+          barber: {
+            name: 'Sarah Wilson'
+          },
+          barber_id: '2',
+          service_id: '1',
+          status: 'pending',
+          notes: 'First time customer'
+        }
+      ] as T;
+    }
+
     if (endpoint.includes('/tenants/my')) {
       return [
         {
@@ -399,6 +541,7 @@ class ApiClient {
           phone: '+1234567890',
           email: 'info@downtownbarbers.com',
           isActive: true,
+          timezone: 'America/New_York',
         },
       ] as T;
     }

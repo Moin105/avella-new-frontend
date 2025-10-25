@@ -11,6 +11,7 @@ interface Tenant {
   phone: string;
   email: string;
   isActive: boolean;
+  timezone?: string;
 }
 
 interface TenantContextType {

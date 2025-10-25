@@ -50,3 +50,4 @@ console.log('- Correct time:', appointmentHour === 11 && appointmentMinute === 0
 console.log('\n=== SUMMARY ===');
 console.log('The appointment should now display at 11:00 AM in the tenant timezone.');
 console.log('This should make it visible in the calendar at the correct time slot.');
+
