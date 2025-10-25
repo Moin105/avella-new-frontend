@@ -1152,7 +1152,7 @@ const SimpleCalendar = () => {
       )}
 
       {/* Debug panel - show appointments */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+      {/* <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
         <h3 className="font-semibold text-yellow-800 mb-2">Debug: Appointments ({appointments.length})</h3>
         <div className="text-sm text-yellow-700">
           {appointments.length > 0 ? (
@@ -1172,17 +1172,17 @@ const SimpleCalendar = () => {
           <p><strong>Current Date:</strong> {currentDate.toLocaleDateString()}</p>
           <p><strong>View Mode:</strong> {viewMode}</p>
           <p><strong>Selected Barber:</strong> {selectedBarber}</p>
-        </div>
+        </div> */}
         
         {/* Special notice for Fizza's appointment */}
-        {appointments.some(apt => apt.client === 'fizza') && (
+        {/* {appointments.some(apt => apt.client === 'fizza') && (
           <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
             <p className="font-semibold text-blue-800">📍 Fizza's Appointment Notice:</p>
             <p className="text-blue-700">Fizza's appointment is at 3:00 PM on October 27, 2025.</p>
             <p className="text-blue-700">You need to <strong>scroll down</strong> in the calendar to see the 3:00 PM time slot!</p>
           </div>
-        )}
-      </div>
+        )} */}
+      {/* </div> */}
 
       {/* Loading state & Calendar Content */}
       <div className="flex-1 overflow-auto">

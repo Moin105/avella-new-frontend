@@ -33,8 +33,9 @@ const ServicesPage = () => {
   const [newService, setNewService] = useState({
     name: '',
     description: '',
-    duration: 30,
+    duration_minutes: 30,
     price: 0,
+    category: 'hair',
     is_active: true
   });
 
@@ -87,8 +88,9 @@ const ServicesPage = () => {
         setNewService({
           name: '',
           description: '',
-          duration: 30,
+          duration_minutes: 30,
           price: 0,
+          category: 'hair',
           is_active: true
         });
         setShowServiceModal(false);
@@ -189,14 +191,30 @@ const ServicesPage = () => {
                   onChange={(e) => setNewService({...newService, description: e.target.value})}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <select
+                  id="category"
+                  value={newService.category}
+                  onChange={(e) => setNewService({...newService, category: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="hair">Hair</option>
+                  <option value="beard">Beard</option>
+                  <option value="facial">Facial</option>
+                  <option value="massage">Massage</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="duration">Duration (minutes)</Label>
+                  <Label htmlFor="duration_minutes">Duration (minutes)</Label>
                   <Input
-                    id="duration"
+                    id="duration_minutes"
                     type="number"
-                    value={newService.duration}
-                    onChange={(e) => setNewService({...newService, duration: parseInt(e.target.value)})}
+                    value={newService.duration_minutes}
+                    onChange={(e) => setNewService({...newService, duration_minutes: parseInt(e.target.value)})}
                     required
                   />
                 </div>

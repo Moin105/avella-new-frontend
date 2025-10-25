@@ -31,6 +31,7 @@ const BarbersPage = () => {
   const { currentTenant } = useTenant();
   const [barbers, setBarbers] = useState([]);
   const [filteredBarbers, setFilteredBarbers] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showBarberModal, setShowBarberModal] = useState(false);
@@ -41,7 +42,8 @@ const BarbersPage = () => {
     phone: '',
     specialties: [],
     bio: '',
-    is_active: true
+    is_active: true,
+    service_ids: [] // Add service IDs array
   });
 
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -50,6 +52,7 @@ const BarbersPage = () => {
     if (currentTenant && !hasLoaded) {
       setHasLoaded(true);
       loadBarbers();
+      loadServices();
     }
   }, [currentTenant, hasLoaded]);
 
@@ -71,6 +74,18 @@ const BarbersPage = () => {
     }
   };
 
+  const loadServices = async () => {
+    try {
+      const response = await apiClient.get('/services');
+      if (response.success) {
+        setServices(response.data);
+        console.log('Services loaded for barber cards:', response.data);
+      }
+    } catch (error) {
+      console.error('Error loading services:', error);
+    }
+  };
+
   const filterBarbers = () => {
     const filtered = barbers.filter(barber =>
       barber.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -83,7 +98,20 @@ const BarbersPage = () => {
   const handleAddBarber = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiClient.post('/barbers', newBarber);
+      // Convert service_ids to specialties for backend compatibility
+      const selectedServices = newBarber.service_ids?.map(serviceId => {
+        const service = services.find(s => s.id === serviceId);
+        return service ? service.name : serviceId;
+      }) || [];
+      
+      const barberData = {
+        ...newBarber,
+        specialties: selectedServices
+      };
+      
+      console.log('Creating barber with data:', barberData);
+      const response = await apiClient.post('/barbers', barberData);
+      console.log('Barber creation response:', response);
       if (response.success) {
         setBarbers([...barbers, response.data]);
         setNewBarber({
@@ -92,7 +120,8 @@ const BarbersPage = () => {
           phone: '',
           specialties: [],
           bio: '',
-          is_active: true
+          is_active: true,
+          service_ids: []
         });
         setShowBarberModal(false);
       }
@@ -103,14 +132,46 @@ const BarbersPage = () => {
 
   const handleEditBarber = (barber) => {
     setSelectedBarber(barber);
-    setNewBarber(barber);
+    
+    // Convert specialties to service_ids for form editing
+    const serviceIds = barber.specialties?.map(specialty => {
+      const service = services.find(s => s.name === specialty);
+      return service ? service.id : null;
+    }).filter(Boolean) || [];
+    
+    const barberWithServiceIds = {
+      ...barber,
+      service_ids: serviceIds
+    };
+    
+    console.log('Editing barber:', {
+      original: barber,
+      specialties: barber.specialties,
+      serviceIds,
+      services: services.length
+    });
+    
+    setNewBarber(barberWithServiceIds);
     setShowBarberModal(true);
   };
 
   const handleUpdateBarber = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiClient.put(`/barbers/${selectedBarber.id}`, newBarber);
+      // Convert service_ids to specialties for backend compatibility
+      const selectedServices = newBarber.service_ids?.map(serviceId => {
+        const service = services.find(s => s.id === serviceId);
+        return service ? service.name : serviceId;
+      }) || [];
+      
+      const barberData = {
+        ...newBarber,
+        specialties: selectedServices
+      };
+      
+      console.log('Updating barber with data:', barberData);
+      const response = await apiClient.put(`/barbers/${selectedBarber.id}`, barberData);
+      console.log('Barber update response:', response);
       if (response.success) {
         setBarbers(barbers.map(b => b.id === selectedBarber.id ? response.data : b));
         setShowBarberModal(false);
@@ -211,6 +272,56 @@ const BarbersPage = () => {
                   onChange={(e) => setNewBarber({...newBarber, bio: e.target.value})}
                 />
               </div>
+              
+              {/* Service Selection */}
+              <div className="space-y-2">
+                <Label>Services</Label>
+                {services.filter(service => service.is_active).length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                    {services.filter(service => service.is_active).map((service) => (
+                      <div key={service.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`service-${service.id}`}
+                          checked={newBarber.service_ids?.includes(service.id) || false}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setNewBarber({
+                                ...newBarber,
+                                service_ids: [...(newBarber.service_ids || []), service.id]
+                              });
+                            } else {
+                              setNewBarber({
+                                ...newBarber,
+                                service_ids: (newBarber.service_ids || []).filter(id => id !== service.id)
+                              });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`service-${service.id}`} className="text-sm">
+                          {service.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground p-2 border rounded-md">
+                    No services available. Create services first.
+                  </div>
+                )}
+                {newBarber.service_ids && newBarber.service_ids.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {newBarber.service_ids.map(serviceId => {
+                      const service = services.find(s => s.id === serviceId);
+                      return service ? (
+                        <Badge key={serviceId} variant="secondary" className="text-xs">
+                          {service.name}
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </div>
+              
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="is_active"
@@ -293,13 +404,48 @@ const BarbersPage = () => {
               {barber.bio && (
                 <p className="text-sm text-muted-foreground">{barber.bio}</p>
               )}
-              {barber.specialties && barber.specialties.length > 0 && (
+              {/* {barber.specialties && barber.specialties.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {barber.specialties.map((specialty, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {specialty}
                     </Badge>
                   ))}
+                </div>
+              )}
+               */}
+              {/* Display associated services */}
+              {((barber.service_ids && barber.service_ids.length > 0) || (barber.specialties && barber.specialties.length > 0)) && (
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-muted-foreground">Services:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {/* Show services from service_ids (new format) */}
+                    {barber.service_ids && barber.service_ids.map((serviceId) => {
+                      const service = services.find(s => s.id === serviceId);
+                      console.log('Barber service mapping:', {
+                        barber: barber.name,
+                        serviceId,
+                        service,
+                        allServices: services.length
+                      });
+                      return service ? (
+                        <Badge key={serviceId} variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                          {service.name}
+                        </Badge>
+                      ) : (
+                        <Badge key={serviceId} variant="outline" className="text-xs bg-red-50 text-red-700">
+                          Service not found
+                        </Badge>
+                      );
+                    })}
+                    
+                    {/* Show services from specialties (legacy format) */}
+                    {barber.specialties && barber.specialties.map((specialty, index) => (
+                      <Badge key={`specialty-${index}`} variant="secondary" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        {specialty}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
