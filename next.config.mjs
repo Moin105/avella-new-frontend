@@ -7,8 +7,8 @@ const nextConfig = {
   
   // Environment variables that should be available on the client side
   env: {
-    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'https://avella-backend-production.up.railway.app','https://avella-backend-production-5de1.up.railway.app/'
-    NEXT_PUBLIC_API_BASE: process.env.NEXT_PUBLIC_API_BASE || 'https://avella-backend-production.up.railway.app/api','https://avella-backend-production-5de1.up.railway.app/'
+    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'https://avella-backend-production.up.railway.app'||'https://avella-backend-production-5de1.up.railway.app/',
+    NEXT_PUBLIC_API_BASE: process.env.NEXT_PUBLIC_API_BASE || 'https://avella-backend-production.up.railway.app/api'||'https://avella-backend-production-5de1.up.railway.app/'
   },
   
   // Headers for CORS if needed
