@@ -54,7 +54,7 @@ const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete, onClose
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
       if (hostname.includes('vercel.app') || hostname.includes('avella') || hostname !== 'localhost') {
-        return `${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://avella-backend-production.up.railway.app'}/api`;
+        return `${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://avella-backend-production-5de1.up.railway.app'}/api`;
       }
     }
     
