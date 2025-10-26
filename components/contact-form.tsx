@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { apiClient } from "@/app/lib/api"
 
 export function ContactForm() {
   const [formData, setFormData] = useState({
@@ -26,25 +27,19 @@ export function ContactForm() {
     setIsSubmitting(true)
     
     try {
-      // Submit to backend API
-      const response = await fetch('/api/leads', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          business_name: formData.businessName,
-          business_type: formData.businessType,
-          number_of_chairs: parseInt(formData.numberOfChairs) || null,
-          message: formData.message,
-          source: 'contact_form'
-        }),
+      // Submit to backend API using apiClient
+      const response = await apiClient.post('/leads', {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        business_name: formData.businessName,
+        business_type: formData.businessType,
+        number_of_chairs: parseInt(formData.numberOfChairs) || null,
+        message: formData.message,
+        source: 'contact_form'
       })
 
-      if (response.ok) {
+      if (response.success) {
         // Reset form on success
         setFormData({
           name: "",
