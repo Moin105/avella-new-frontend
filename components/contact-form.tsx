@@ -17,7 +17,6 @@ export function ContactForm() {
     phone: "",
     businessName: "",
     businessType: "",
-    numberOfChairs: "",
     message: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -34,7 +33,6 @@ export function ContactForm() {
         phone: formData.phone,
         business_name: formData.businessName,
         business_type: formData.businessType,
-        number_of_chairs: parseInt(formData.numberOfChairs) || null,
         message: formData.message,
         source: 'contact_form'
       })
@@ -47,7 +45,6 @@ export function ContactForm() {
           phone: "",
           businessName: "",
           businessType: "",
-          numberOfChairs: "",
           message: "",
         })
         alert('Thank you for your interest! We will contact you soon.')
@@ -125,18 +122,6 @@ export function ContactForm() {
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="chairs">Number of Chairs/Stylists</Label>
-          <Input
-            id="chairs"
-            type="number"
-            placeholder="e.g., 5"
-            min="1"
-            value={formData.numberOfChairs}
-            onChange={(e) => setFormData({ ...formData, numberOfChairs: e.target.value })}
-            required
-          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="message">Additional Information (Optional)</Label>
