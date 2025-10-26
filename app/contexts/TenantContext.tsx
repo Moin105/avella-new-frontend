@@ -68,11 +68,11 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await apiClient.get('/tenants/my');
       
       if (response.success) {
-        setTenants(response.data);
+        setTenants(response.data as Tenant[]);
         
         // Auto-select first tenant if available and no current tenant
-        if (response.data.length > 0 && !currentTenant) {
-          setCurrentTenant(response.data[0]);
+        if ((response.data as Tenant[]).length > 0 && !currentTenant) {
+          setCurrentTenant((response.data as Tenant[])[0]);
         }
       }
     } catch (error) {
@@ -87,7 +87,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await apiClient.post('/tenants', tenantData);
       
       if (response.success) {
-        const newTenant = response.data;
+        const newTenant = response.data as Tenant;
         setTenants(prev => [...prev, newTenant]);
         
         // Set as current tenant if it's the first one
@@ -109,7 +109,7 @@ export const TenantProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await apiClient.put(`/tenants/${tenantId}`, updateData);
       
       if (response.success) {
-        const updatedTenant = response.data;
+        const updatedTenant = response.data as Tenant;
         setTenants(prev => prev.map(t => t.id === tenantId ? updatedTenant : t));
         
         if (currentTenant?.id === tenantId) {

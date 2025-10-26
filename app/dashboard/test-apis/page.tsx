@@ -7,9 +7,16 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 
+interface TestResult {
+  success: boolean;
+  data: any;
+  error?: string;
+  status: 'success' | 'error';
+}
+
 const TestAPIsPage = () => {
   const { currentTenant } = useTenant();
-  const [results, setResults] = useState<any>({});
+  const [results, setResults] = useState<Record<string, TestResult>>({});
   const [loading, setLoading] = useState(false);
 
   const testAPI = async (endpoint: string, name: string) => {
@@ -33,7 +40,8 @@ const TestAPIsPage = () => {
         ...prev,
         [name]: {
           success: false,
-          error: error,
+          data: null,
+          error: String(error),
           status: 'error'
         }
       }));
@@ -91,7 +99,7 @@ const TestAPIsPage = () => {
               <strong>API Client Tenant ID:</strong> {apiClient.getCurrentTenantId() || 'None'}
             </div>
             <div>
-              <strong>Authentication:</strong> {apiClient.token ? 'Logged In' : 'Not Logged In'}
+              <strong>Authentication:</strong> {typeof window !== 'undefined' && localStorage.getItem('token') ? 'Logged In' : 'Not Logged In'}
             </div>
           </CardContent>
         </Card>

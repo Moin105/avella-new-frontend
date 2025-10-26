@@ -27,13 +27,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 const ClientsPage = () => {
   const { currentTenant } = useTenant();
-  const [clients, setClients] = useState([]);
-  const [filteredClients, setFilteredClients] = useState([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [filteredClients, setFilteredClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showClientModal, setShowClientModal] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedClient, setSelectedClient] = useState<any>(null);
   const [newClient, setNewClient] = useState({
     name: '',
     email: '',
@@ -117,7 +117,7 @@ const ClientsPage = () => {
     setFilteredClients(filtered);
   };
 
-  const handleAddClient = async (e) => {
+  const handleAddClient = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await apiClient.post('/clients', newClient);
@@ -138,15 +138,16 @@ const ClientsPage = () => {
     }
   };
 
-  const handleEditClient = (client) => {
+  const handleEditClient = (client: any) => {
     setSelectedClient(client);
     setNewClient(client);
     setShowClientModal(true);
   };
 
-  const handleUpdateClient = async (e) => {
+  const handleUpdateClient = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!selectedClient) return;
       const response = await apiClient.put(`/clients/${selectedClient.id}`, newClient);
       if (response.success) {
         setClients(clients.map(c => c.id === selectedClient.id ? response.data : c));
@@ -158,7 +159,7 @@ const ClientsPage = () => {
     }
   };
 
-  const handleDeleteClient = async (clientId) => {
+  const handleDeleteClient = async (clientId: string) => {
     try {
       const response = await apiClient.delete(`/clients/${clientId}`);
       if (response.success) {
@@ -169,7 +170,7 @@ const ClientsPage = () => {
     }
   };
 
-  const getStatusBadge = (isActive) => {
+  const getStatusBadge = (isActive: boolean) => {
     return (
       <Badge variant={isActive ? 'default' : 'secondary'}>
         {isActive ? 'Active' : 'Inactive'}

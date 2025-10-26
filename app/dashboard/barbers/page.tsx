@@ -29,13 +29,13 @@ import { Checkbox } from '../../components/ui/checkbox';
 
 const BarbersPage = () => {
   const { currentTenant } = useTenant();
-  const [barbers, setBarbers] = useState([]);
-  const [filteredBarbers, setFilteredBarbers] = useState([]);
-  const [services, setServices] = useState([]);
+  const [barbers, setBarbers] = useState<any[]>([]);
+  const [filteredBarbers, setFilteredBarbers] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showBarberModal, setShowBarberModal] = useState(false);
-  const [selectedBarber, setSelectedBarber] = useState(null);
+  const [selectedBarber, setSelectedBarber] = useState<any>(null);
   const [newBarber, setNewBarber] = useState({
     name: '',
     email: '',
@@ -43,7 +43,7 @@ const BarbersPage = () => {
     specialties: [],
     bio: '',
     is_active: true,
-    service_ids: [] // Add service IDs array
+    service_ids: [] as string[] // Add service IDs array
   });
 
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -65,7 +65,7 @@ const BarbersPage = () => {
       setLoading(true);
       const response = await apiClient.get('/barbers');
       if (response.success) {
-        setBarbers(response.data);
+        setBarbers(response.data as any[]);
       }
     } catch (error) {
       console.error('Error loading barbers:', error);
@@ -78,7 +78,7 @@ const BarbersPage = () => {
     try {
       const response = await apiClient.get('/services');
       if (response.success) {
-        setServices(response.data);
+        setServices(response.data as any[]);
         console.log('Services loaded for barber cards:', response.data);
       }
     } catch (error) {
@@ -95,7 +95,7 @@ const BarbersPage = () => {
     setFilteredBarbers(filtered);
   };
 
-  const handleAddBarber = async (e) => {
+  const handleAddBarber = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       // Convert service_ids to specialties for backend compatibility
@@ -130,11 +130,11 @@ const BarbersPage = () => {
     }
   };
 
-  const handleEditBarber = (barber) => {
+  const handleEditBarber = (barber: any) => {
     setSelectedBarber(barber);
     
     // Convert specialties to service_ids for form editing
-    const serviceIds = barber.specialties?.map(specialty => {
+    const serviceIds = barber.specialties?.map((specialty: any) => {
       const service = services.find(s => s.name === specialty);
       return service ? service.id : null;
     }).filter(Boolean) || [];
@@ -155,7 +155,7 @@ const BarbersPage = () => {
     setShowBarberModal(true);
   };
 
-  const handleUpdateBarber = async (e) => {
+  const handleUpdateBarber = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       // Convert service_ids to specialties for backend compatibility
@@ -170,6 +170,7 @@ const BarbersPage = () => {
       };
       
       console.log('Updating barber with data:', barberData);
+      if (!selectedBarber) return;
       const response = await apiClient.put(`/barbers/${selectedBarber.id}`, barberData);
       console.log('Barber update response:', response);
       if (response.success) {
@@ -182,7 +183,7 @@ const BarbersPage = () => {
     }
   };
 
-  const handleDeleteBarber = async (barberId) => {
+  const handleDeleteBarber = async (barberId: string) => {
     try {
       const response = await apiClient.delete(`/barbers/${barberId}`);
       if (response.success) {
@@ -193,14 +194,14 @@ const BarbersPage = () => {
     }
   };
 
-  const getStatusIcon = (isActive) => {
+  const getStatusIcon = (isActive: boolean) => {
     if (isActive) {
       return <CheckCircle className="h-4 w-4 text-green-500" />;
     }
     return <XCircle className="h-4 w-4 text-red-500" />;
   };
 
-  const getStatusText = (isActive) => {
+  const getStatusText = (isActive: boolean) => {
     return isActive ? 'Active' : 'Inactive';
   };
 
@@ -326,7 +327,7 @@ const BarbersPage = () => {
                 <Checkbox
                   id="is_active"
                   checked={newBarber.is_active}
-                  onCheckedChange={(checked) => setNewBarber({...newBarber, is_active: checked})}
+                  onCheckedChange={(checked) => setNewBarber({...newBarber, is_active: !!checked})}
                 />
                 <Label htmlFor="is_active">Active</Label>
               </div>
@@ -420,7 +421,7 @@ const BarbersPage = () => {
                   <div className="text-xs font-medium text-muted-foreground">Services:</div>
                   <div className="flex flex-wrap gap-1">
                     {/* Show services from service_ids (new format) */}
-                    {barber.service_ids && barber.service_ids.map((serviceId) => {
+                    {barber.service_ids && barber.service_ids.map((serviceId: any) => {
                       const service = services.find(s => s.id === serviceId);
                       console.log('Barber service mapping:', {
                         barber: barber.name,
@@ -440,7 +441,7 @@ const BarbersPage = () => {
                     })}
                     
                     {/* Show services from specialties (legacy format) */}
-                    {barber.specialties && barber.specialties.map((specialty, index) => (
+                    {barber.specialties && barber.specialties.map((specialty: any, index: number) => (
                       <Badge key={`specialty-${index}`} variant="secondary" className="text-xs bg-green-50 text-green-700 border-green-200">
                         {specialty}
                       </Badge>

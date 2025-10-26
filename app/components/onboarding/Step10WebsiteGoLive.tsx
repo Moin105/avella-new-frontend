@@ -30,7 +30,7 @@ const Step10WebsiteGoLive: React.FC<Step10WebsiteGoLiveProps> = ({ data, onUpdat
     maintenanceMessage: data?.maintenanceMessage || 'We are currently updating our system. Please check back later.'
   });
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isGeneratingWebsite, setIsGeneratingWebsite] = useState(false);
 
   const handleInputChange = (field: string, value: any) => {

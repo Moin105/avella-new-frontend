@@ -41,7 +41,7 @@ const Step5ServicesEnhanced: React.FC<Step5ServicesEnhancedProps> = ({ data, onU
   });
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [showImportModal, setShowImportModal] = useState(false);
 
   // Predefined service categories with checkboxes

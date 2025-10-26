@@ -31,7 +31,7 @@ const Step9ConsentTemplates: React.FC<Step9ConsentTemplatesProps> = ({ data, onU
     emailText: data?.consentSettings?.emailText || 'We may send you appointment confirmations and updates via email.'
   });
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (field: string, value: any) => {
     setConsentSettings(prev => ({

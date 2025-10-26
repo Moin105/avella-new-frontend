@@ -31,7 +31,7 @@ const Step8Calendar: React.FC<Step8CalendarProps> = ({ data, onUpdate, onNext, o
 
   const [googleConnected, setGoogleConnected] = useState(false);
   const [outlookConnected, setOutlookConnected] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const syncDirections = [
     { value: 'avella_to_calendar', label: 'Avella to Calendar (One-way)' },

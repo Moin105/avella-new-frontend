@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await apiClient.get('/auth/me');
       
       if (response.success) {
-        setUser(response.data);
+        setUser(response.data as User);
         setIsAuthenticated(true);
         
         // Restore tenant ID from localStorage if available
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await apiClient.post('/auth/login', { email, password });
       
       if (response.success) {
-        const { access_token, user: userData } = response.data;
+        const { access_token, user: userData } = response.data as { access_token: string; user: User };
         apiClient.setToken(access_token);
         setUser(userData);
         setIsAuthenticated(true);
@@ -81,8 +81,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Fetch tenant information immediately after login
         try {
           const tenantResponse = await apiClient.get('/tenants/my');
-          if (tenantResponse.success && tenantResponse.data.length > 0) {
-            const firstTenant = tenantResponse.data[0];
+          if (tenantResponse.success && (tenantResponse.data as any[]).length > 0) {
+            const firstTenant = (tenantResponse.data as any[])[0];
             apiClient.setTenantId(firstTenant.id);
             console.log('AuthContext: Set tenant ID after login:', firstTenant.id);
           }

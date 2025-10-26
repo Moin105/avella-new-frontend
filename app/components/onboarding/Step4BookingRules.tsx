@@ -31,7 +31,7 @@ const Step4BookingRules: React.FC<Step4BookingRulesProps> = ({ data, onUpdate, o
     maxBookingsPerDay: data?.bookingRules?.maxBookingsPerDay || 20
   });
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (field: string, value: any) => {
     setBookingRules(prev => ({

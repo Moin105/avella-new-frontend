@@ -19,17 +19,22 @@ export function Footer() {
             <h3 className="font-semibold text-foreground mb-4">Product</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Features
-                </a>
-              </li>
-              <li>
-                <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
                   How It Works
                 </a>
               </li>
               <li>
-                <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="/#features" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Features
+                </a>
+              </li>
+              <li>
+                <a href="/#integrations" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Integrations
+                </a>
+              </li>
+              <li>
+                <a href="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                   Pricing
                 </a>
               </li>
@@ -40,18 +45,18 @@ export function Footer() {
             <h3 className="font-semibold text-foreground mb-4">Company</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
                   About
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
                   Contact
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy
+                <a href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Privacy Policy
                 </a>
               </li>
             </ul>

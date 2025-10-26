@@ -30,14 +30,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 const BookingsPage = () => {
   const { currentTenant } = useTenant();
-  const [bookings, setBookings] = useState([]);
-  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterDate, setFilterDate] = useState('');
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [newBooking, setNewBooking] = useState({
     client_name: '',
     client_phone: '',
@@ -50,9 +50,9 @@ const BookingsPage = () => {
     notes: '',
     status: 'pending'
   });
-  const [services, setServices] = useState([]);
-  const [barbers, setBarbers] = useState([]);
-  const [clients, setClients] = useState([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [barbers, setBarbers] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -90,10 +90,10 @@ const BookingsPage = () => {
       if (bookingsRes.success) {
         hasSuccessfulCall = true;
         // Map appointments to UI format with timezone conversion
-        const serviceIdToName = new Map(servicesRes.success ? servicesRes.data.map((s: any) => [s.id, s.name]) : []);
+        const serviceIdToName = new Map(servicesRes.success ? (servicesRes.data as any[]).map((s: any) => [s.id, s.name]) : []);
         const tenantTimezone = currentTenant?.timezone || 'America/New_York';
         
-        const mapped = bookingsRes.data.map((a: any) => {
+        const mapped = (bookingsRes.data as any[]).map((a: any) => {
           // Convert times to tenant timezone
           const startTimeConverted = convertToTenantTimezone(a.start_time, tenantTimezone);
           const endTimeConverted = convertToTenantTimezone(a.end_time, tenantTimezone);
@@ -125,7 +125,7 @@ const BookingsPage = () => {
       
       if (servicesRes.success) {
         hasSuccessfulCall = true;
-        setServices(servicesRes.data);
+        setServices(servicesRes.data as any[]);
         console.log('Services loaded:', servicesRes.data);
       } else {
         console.error('Services API error:', servicesRes.error);
@@ -134,7 +134,7 @@ const BookingsPage = () => {
       
       if (barbersRes.success) {
         hasSuccessfulCall = true;
-        setBarbers(barbersRes.data);
+        setBarbers(barbersRes.data as any[]);
         console.log('Barbers loaded:', barbersRes.data);
       } else {
         console.error('Barbers API error:', barbersRes.error);
@@ -185,7 +185,7 @@ const BookingsPage = () => {
     setFilteredBookings(filtered);
   };
 
-  const handleCreateBooking = async (e) => {
+  const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setFormLoading(true);
@@ -247,13 +247,13 @@ const BookingsPage = () => {
     }
   };
 
-  const handleEditBooking = (booking) => {
+  const handleEditBooking = (booking: any) => {
     setSelectedBooking(booking);
     setNewBooking(booking);
     setShowBookingModal(true);
   };
 
-  const handleUpdateBooking = async (e) => {
+  const handleUpdateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setFormLoading(true);
@@ -273,6 +273,7 @@ const BookingsPage = () => {
         notes: newBooking.notes || '',
         status: newBooking.status
       };
+      if (!selectedBooking) return;
       const response = await apiClient.put(`/appointments/${selectedBooking.id}`, payload);
       if (response.success) {
         const a: any = response.data;
@@ -301,7 +302,7 @@ const BookingsPage = () => {
     }
   };
 
-  const handleDeleteBooking = async (bookingId) => {
+  const handleDeleteBooking = async (bookingId: string) => {
     try {
       const response = await apiClient.delete(`/appointments/${bookingId}`);
       if (response.success) {
@@ -312,7 +313,7 @@ const BookingsPage = () => {
     }
   };
 
-  const handleStatusChange = async (bookingId, newStatus) => {
+  const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
       const response = await apiClient.put(`/appointments/${bookingId}`, { status: newStatus });
       if (response.success) {
@@ -323,7 +324,7 @@ const BookingsPage = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'confirmed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
@@ -336,7 +337,7 @@ const BookingsPage = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';

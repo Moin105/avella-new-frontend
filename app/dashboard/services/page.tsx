@@ -22,14 +22,24 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  duration_minutes: number;
+  price: number;
+  category: string;
+  is_active: boolean;
+}
+
 const ServicesPage = () => {
   const { currentTenant } = useTenant();
-  const [services, setServices] = useState([]);
-  const [filteredServices, setFilteredServices] = useState([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showServiceModal, setShowServiceModal] = useState(false);
-  const [selectedService, setSelectedService] = useState(null);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [newService, setNewService] = useState({
     name: '',
     description: '',
@@ -59,7 +69,7 @@ const ServicesPage = () => {
       const response = await apiClient.get('/services');
       console.log('Services API response:', response);
       if (response.success) {
-        setServices(response.data);
+        setServices(response.data as Service[]);
         console.log('Services loaded:', response.data);
       } else {
         console.error('Services API error:', response.error);
@@ -79,12 +89,12 @@ const ServicesPage = () => {
     setFilteredServices(filtered);
   };
 
-  const handleAddService = async (e) => {
+  const handleAddService = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await apiClient.post('/services', newService);
       if (response.success) {
-        setServices([...services, response.data]);
+        setServices([...services, response.data as Service]);
         setNewService({
           name: '',
           description: '',
@@ -100,18 +110,19 @@ const ServicesPage = () => {
     }
   };
 
-  const handleEditService = (service) => {
+  const handleEditService = (service: Service) => {
     setSelectedService(service);
     setNewService(service);
     setShowServiceModal(true);
   };
 
-  const handleUpdateService = async (e) => {
+  const handleUpdateService = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedService) return;
     try {
       const response = await apiClient.put(`/services/${selectedService.id}`, newService);
       if (response.success) {
-        setServices(services.map(s => s.id === selectedService.id ? response.data : s));
+        setServices(services.map(s => s.id === selectedService.id ? response.data as Service : s));
         setShowServiceModal(false);
         setSelectedService(null);
       }
@@ -120,7 +131,7 @@ const ServicesPage = () => {
     }
   };
 
-  const handleDeleteService = async (serviceId) => {
+  const handleDeleteService = async (serviceId: string) => {
     try {
       const response = await apiClient.delete(`/services/${serviceId}`);
       if (response.success) {
@@ -131,14 +142,14 @@ const ServicesPage = () => {
     }
   };
 
-  const getStatusIcon = (isActive) => {
+  const getStatusIcon = (isActive: boolean) => {
     if (isActive) {
       return <CheckCircle className="h-4 w-4 text-green-500" />;
     }
     return <XCircle className="h-4 w-4 text-red-500" />;
   };
 
-  const getStatusText = (isActive) => {
+  const getStatusText = (isActive: boolean) => {
     return isActive ? 'Active' : 'Inactive';
   };
 
@@ -300,7 +311,7 @@ const ServicesPage = () => {
                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <div className="flex items-center space-x-1">
                     <Clock className="h-4 w-4" />
-                    <span>{service.duration} min</span>
+                    <span>{service.duration_minutes} min</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <DollarSign className="h-4 w-4" />

@@ -100,7 +100,7 @@ export default function AdminDashboard() {
       setLoading(true);
       const response = await apiClient.get('/admin/metrics');
       if (response.success) {
-        setStats(response.data);
+        setStats(response.data as AdminStats);
       }
     } catch (error) {
       console.error('Failed to fetch admin stats:', error);
@@ -121,7 +121,7 @@ export default function AdminDashboard() {
     try {
       const response = await apiClient.get('/admin/tenants');
       if (response.success) {
-        setTenants(response.data);
+        setTenants(response.data as Tenant[]);
       }
     } catch (error) {
       console.error('Failed to fetch tenants:', error);

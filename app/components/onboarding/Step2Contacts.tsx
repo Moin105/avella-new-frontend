@@ -43,7 +43,7 @@ const Step2Contacts: React.FC<Step2ContactsProps> = ({ data, onUpdate, onNext, o
     }
   });
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (section: string, field: string, value: string) => {
     setFormData(prev => ({
@@ -294,8 +294,8 @@ const Step2Contacts: React.FC<Step2ContactsProps> = ({ data, onUpdate, onNext, o
               <Label htmlFor="redirect_title">Title</Label>
               <Input
                 id="redirect_title"
-                value={formData.redirect.title}
-                onChange={(e) => handleInputChange('redirect', 'title', e.target.value)}
+                value={formData.redirect.name}
+                onChange={(e) => handleInputChange('redirect', 'name', e.target.value)}
                 placeholder="Contact Person"
               />
             </div>

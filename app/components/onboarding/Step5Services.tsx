@@ -197,7 +197,7 @@ const Step5Services: React.FC<Step5ServicesProps> = ({ data, onUpdate, onNext, o
   });
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const categories = [
     // Men's Categories

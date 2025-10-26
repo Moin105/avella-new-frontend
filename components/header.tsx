@@ -3,13 +3,14 @@
 import type React from "react"
 
 import Image from "next/image"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { SignInModal } from "@/components/sign-in-modal"
 import { RequestDemoModal } from "@/components/request-demo-modal"
 import { useState } from "react"
 
 export function Header() {
-  const [signInOpen, setSignInOpen] = useState(false)
+  const router = useRouter()
   const [demoOpen, setDemoOpen] = useState(false)
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
@@ -63,7 +64,7 @@ export function Header() {
             </nav>
 
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => setSignInOpen(true)}>
+              <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => router.push('/login')}>
                 Sign In
               </Button>
               <Button size="sm" onClick={() => setDemoOpen(true)}>
@@ -74,7 +75,6 @@ export function Header() {
         </div>
       </header>
 
-      <SignInModal open={signInOpen} onOpenChange={setSignInOpen} />
       <RequestDemoModal open={demoOpen} onOpenChange={setDemoOpen} />
     </>
   )

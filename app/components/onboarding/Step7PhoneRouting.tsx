@@ -30,7 +30,7 @@ const Step7PhoneRouting: React.FC<Step7PhoneRoutingProps> = ({ data, onUpdate, o
     enableCallRecording: data?.phoneSettings?.enableCallRecording || false
   });
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const routingMethods = [
     { value: 'round_robin', label: 'Round Robin (Distribute evenly)' },

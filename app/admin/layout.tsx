@@ -4,7 +4,7 @@ import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LogOut, User, Home, BarChart3, Zap, AlertTriangle, Settings } from 'lucide-react';
+import { Loader2, LogOut, User, Home, BarChart3, Zap, AlertTriangle, Settings, Users } from 'lucide-react';
 import { Button } from '../components/ui/button';
 
 interface AdminLayoutProps {
@@ -18,6 +18,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const navigationItems = [
     { href: '/admin', label: 'Dashboard', icon: Home },
+    { href: '/admin/leads', label: 'Leads', icon: Users },
     { href: '/admin/metrics', label: 'Metrics', icon: BarChart3 },
     { href: '/admin/integrations', label: 'Integrations', icon: Zap },
     { href: '/admin/error-center', label: 'Error Center', icon: AlertTriangle },

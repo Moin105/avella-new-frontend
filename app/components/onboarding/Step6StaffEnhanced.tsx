@@ -40,7 +40,7 @@ const Step6StaffEnhanced: React.FC<Step6StaffEnhancedProps> = ({ data, onUpdate,
   });
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [showImportModal, setShowImportModal] = useState(false);
 
   const roles = [

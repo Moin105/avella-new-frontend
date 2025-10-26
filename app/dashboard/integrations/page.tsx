@@ -23,13 +23,26 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '../../components/ui/label';
 import { Input } from '../../components/ui/input';
 
+interface ConfigData {
+  client_id?: string;
+  client_secret?: string;
+  api_key?: string;
+  webhook_url?: string;
+  account_sid?: string;
+  auth_token?: string;
+  phone_number?: string;
+  publishable_key?: string;
+  secret_key?: string;
+  [key: string]: any;
+}
+
 const IntegrationsPage = () => {
   const { currentTenant } = useTenant();
-  const [integrations, setIntegrations] = useState([]);
+  const [integrations, setIntegrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const [selectedIntegration, setSelectedIntegration] = useState(null);
-  const [configData, setConfigData] = useState({});
+  const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
+  const [configData, setConfigData] = useState<ConfigData>({});
 
   const availableIntegrations = [
     {
@@ -117,7 +130,7 @@ const IntegrationsPage = () => {
       setLoading(true);
       const response = await apiClient.get('/integrations');
       if (response.success) {
-        setIntegrations(response.data);
+        setIntegrations(response.data as any[]);
       }
     } catch (error) {
       console.error('Error loading integrations:', error);
@@ -126,13 +139,13 @@ const IntegrationsPage = () => {
     }
   };
 
-  const handleConnect = (integration) => {
+  const handleConnect = (integration: any) => {
     setSelectedIntegration(integration);
     setConfigData({});
     setShowConfigModal(true);
   };
 
-  const handleDisconnect = async (integrationId) => {
+  const handleDisconnect = async (integrationId: string) => {
     try {
       const response = await apiClient.delete(`/integrations/${integrationId}`);
       if (response.success) {
@@ -143,7 +156,7 @@ const IntegrationsPage = () => {
     }
   };
 
-  const handleConfigure = async (e) => {
+  const handleConfigure = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await apiClient.post('/integrations', {
@@ -160,7 +173,7 @@ const IntegrationsPage = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'connected':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
@@ -171,7 +184,7 @@ const IntegrationsPage = () => {
     }
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'connected':
         return <Badge className="bg-green-100 text-green-800">Connected</Badge>;
@@ -182,7 +195,7 @@ const IntegrationsPage = () => {
     }
   };
 
-  const getCategoryColor = (category) => {
+  const getCategoryColor = (category: string) => {
     switch (category) {
       case 'Calendar': return 'bg-blue-100 text-blue-800';
       case 'Communication': return 'bg-green-100 text-green-800';

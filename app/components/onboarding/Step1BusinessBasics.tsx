@@ -31,7 +31,7 @@ const Step1BusinessBasics: React.FC<Step1BusinessBasicsProps> = ({ data, onUpdat
   const [selectedState, setSelectedState] = useState(data?.tenant?.address?.state || '');
   const [selectedCity, setSelectedCity] = useState(data?.tenant?.address?.city || '');
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   const timezones = [

@@ -148,8 +148,8 @@ export function getTimezoneInfo(tz: string): { offset: string; abbreviation: str
   try {
     const dt = DateTime.now().setZone(tz);
     return {
-      offset: dt.offsetNameShort,
-      abbreviation: dt.offsetNameLong
+      offset: dt.offsetNameShort || 'Unknown',
+      abbreviation: dt.offsetNameLong || 'Unknown timezone'
     };
   } catch (error) {
     return { offset: 'Invalid', abbreviation: 'Invalid timezone' };
@@ -293,7 +293,7 @@ export function bookingToCalendarEvent(booking: any, tenantZone: string) {
         startDT: startDT.toISO(),
         startInTenant: startInTenant.toISO(),
         startInTenantLocal: startInTenant.toLocaleString(),
-        startInTenantNY: startInTenant.toLocaleString('en-US', { timeZone: 'America/New_York' }),
+        startInTenantNY: startInTenant.setZone('America/New_York').toLocaleString(),
         tenantZone: tenantZone
       });
     }

@@ -72,7 +72,7 @@ const SettingsPage = () => {
       setLoading(true);
       const response = await apiClient.get('/settings');
       if (response.success) {
-        setSettings(response.data);
+        setSettings(response.data as typeof settings);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -96,7 +96,7 @@ const SettingsPage = () => {
     }
   };
 
-  const updateBusinessSettings = (field, value) => {
+  const updateBusinessSettings = (field: string, value: string) => {
     setSettings({
       ...settings,
       business: {
@@ -106,7 +106,7 @@ const SettingsPage = () => {
     });
   };
 
-  const updateNotificationSettings = (field, value) => {
+  const updateNotificationSettings = (field: string, value: boolean) => {
     setSettings({
       ...settings,
       notifications: {
@@ -116,7 +116,7 @@ const SettingsPage = () => {
     });
   };
 
-  const updateBookingSettings = (field, value) => {
+  const updateBookingSettings = (field: string, value: number | boolean) => {
     setSettings({
       ...settings,
       booking: {
@@ -126,7 +126,7 @@ const SettingsPage = () => {
     });
   };
 
-  const updatePaymentSettings = (field, value) => {
+  const updatePaymentSettings = (field: string, value: string | number | boolean) => {
     setSettings({
       ...settings,
       payment: {

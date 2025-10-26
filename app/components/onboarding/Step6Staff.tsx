@@ -50,7 +50,7 @@ const Step6Staff: React.FC<Step6StaffProps> = ({ data, onUpdate, onNext, onBack 
   });
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const roles = [
     { value: 'barber', label: 'Barber' },

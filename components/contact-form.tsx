@@ -19,11 +19,52 @@ export function ContactForm() {
     numberOfChairs: "",
     message: "",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission
-    console.log("[v0] Contact form:", formData)
+    setIsSubmitting(true)
+    
+    try {
+      // Submit to backend API
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          business_name: formData.businessName,
+          business_type: formData.businessType,
+          number_of_chairs: parseInt(formData.numberOfChairs) || null,
+          message: formData.message,
+          source: 'contact_form'
+        }),
+      })
+
+      if (response.ok) {
+        // Reset form on success
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          businessName: "",
+          businessType: "",
+          numberOfChairs: "",
+          message: "",
+        })
+        alert('Thank you for your interest! We will contact you soon.')
+      } else {
+        throw new Error('Failed to submit form')
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error)
+      alert('There was an error submitting your form. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -112,8 +153,8 @@ export function ContactForm() {
             rows={3}
           />
         </div>
-        <Button type="submit" className="w-full">
-          Submit
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : 'Submit'}
         </Button>
       </form>
     </div>

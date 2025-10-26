@@ -27,7 +27,7 @@ const Step11PlanBilling: React.FC<Step11PlanBillingProps> = ({ data, onUpdate, o
     }
   });
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const planTiers = [
     { value: 'Starter', label: 'Starter', price: 0, description: 'Basic features for small businesses' },
