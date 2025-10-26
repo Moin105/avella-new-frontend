@@ -48,7 +48,7 @@ export default function ErrorCenter() {
       if (filters.severity !== 'all') params.append('severity', filters.severity);
       if (filters.status !== 'all') params.append('status', filters.status);
 
-      const response = await apiClient.get(`/admin/events/failed?${params.toString()}`);
+      const response = await apiClient.get<ErrorEvent[]>(`/admin/events/failed?${params.toString()}`);
       if (response.success) {
         setErrors(response.data);
       }

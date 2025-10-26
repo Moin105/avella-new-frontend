@@ -44,7 +44,7 @@ export default function IntegrationHealth() {
   const loadHealthData = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get(`/admin/integrations/health?tenant=${selectedTenant}`);
+      const response = await apiClient.get<IntegrationHealth[]>(`/admin/integrations/health?tenant=${selectedTenant}`);
       if (response.success) {
         setHealthData(response.data);
       }
