@@ -15,7 +15,8 @@ export const metadata: Metadata = {
     "Transform your barbershop or salon with AI-powered appointment booking and CRM. Never miss a booking again with 24/7 voice AI assistance.",
   generator: "v0.app",
   icons: {
-    icon: [{ url: "/avella-logo-icon.png", type: "image/png" }],
+    icon: "/avella-logo-icon.png",
+    shortcut: "/avella-logo-icon.png",
     apple: "/avella-logo-icon.png",
   },
 }
