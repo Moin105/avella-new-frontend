@@ -1,8 +1,36 @@
 export function UseCases() {
   const useCases = [
     {
-      title: "High-Volume Barbershops",
-      description: "Handle 100+ calls per day without missing a beat. Perfect for busy shops with multiple chairs.",
+      title: "Doctors' Offices & Clinics",
+      description: "Triage calls, route urgent requests, and keep provider schedules full without overloading staff.",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 8c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 2c-2.21 0-4 1.79-4 4v6h8v-6c0-2.21-1.79-4-4-4zm6-6h2m-1-1v2m-14-2H3m1-1v2"
+          />
+        </svg>
+      ),
+    },
+    {
+      title: "Restaurants & Hospitality",
+      description: "Manage reservations, waitlists, and catering inquiries with instant confirmations and updates.",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 3h16M4 9h16M9 21h6m-9-6h12l1-6H4l1 6z"
+          />
+        </svg>
+      ),
+    },
+    {
+      title: "Barbers & Salons",
+      description: "Fill chairs, coordinate stylists, and personalize visits with client preferences at the ready.",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -15,43 +43,72 @@ export function UseCases() {
       ),
     },
     {
-      title: "Multi-Location Salons",
-      description: "Manage appointments across multiple locations with centralized booking and client data.",
+      title: "Residential Buildings",
+      description: "Provide residents with on-demand assistance, maintenance scheduling, and amenity reservations.",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            d="M4 21h16V7l-8-4-8 4v14zm8-10v10m4-6h4m-16 0h4"
           />
         </svg>
       ),
     },
     {
-      title: "Solo Stylists",
-      description: "Focus on your craft while AI handles your bookings. Perfect for independent professionals.",
+      title: "Service Trades",
+      description: "Dispatch crews, coordinate field visits, and confirm jobs for plumbers, electricians, and contractors.",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            d="M3 7h18M5 7l1 12h12l1-12M10 11h4m-5 4h6"
           />
         </svg>
       ),
     },
     {
-      title: "After-Hours Booking",
-      description: "Capture appointments 24/7, even when you're closed. Never lose business to competitors.",
+      title: "Reception Teams",
+      description: "Give front desks superpowers with overflow support, call routing, and smart follow-ups.",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            d="M7 9a5 5 0 0110 0v2h1a3 3 0 013 3v4h-4v-2H7v2H3v-4a3 3 0 013-3h1V9z"
+          />
+        </svg>
+      ),
+    },
+    {
+      title: "Dry Cleaners",
+      description: "Streamline drop-off scheduling, delivery routes, and customer updates without missing a call.",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 4h16l-2 14H6L4 4zm4 4h8m-7 4h6"
+          />
+        </svg>
+      ),
+    },
+    {
+      title: "Other Industries",
+      description:
+        "Have phones, bookings, or inbound requests to juggle? We’ll tailor the agent to your workflow—real estate, gyms, auto shops, legal, education, nonprofits, and more. Tell us your process and we’ll map it end-to-end.",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 6v12m6-6H6"
           />
         </svg>
       ),
@@ -63,14 +120,14 @@ export function UseCases() {
       <div className="container mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
-            Built for Every Type of Business
+            Built for Every Team that Picks Up the Phone
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Whether you're a solo stylist or managing multiple locations, Avella AI scales with your needs
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            From healthcare to hospitality and property management, Avella AI adapts to the workflows of your industry.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {useCases.map((useCase, index) => (
             <div
               key={index}

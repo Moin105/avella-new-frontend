@@ -17,8 +17,8 @@ export function CTA() {
               Ready to transform your business?
             </h2>
             <p className="text-xl text-muted-foreground mb-10 text-balance max-w-2xl mx-auto">
-              Join hundreds of barbershops and salons using Avella AI to book more appointments and delight their
-              clients.
+              Join leading clinics, restaurants, salons, property managers, service pros, reception teams, and dry
+              cleaners using Avella AI to deliver seamless customer experiences.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="text-base px-8 h-12 w-full sm:w-auto" onClick={() => setDemoOpen(true)}>

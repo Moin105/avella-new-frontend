@@ -99,7 +99,7 @@ export function ContactForm() {
           <Label htmlFor="business-name">Business Name</Label>
           <Input
             id="business-name"
-            placeholder="Your barbershop or salon name"
+            placeholder="Your business or organization name"
             value={formData.businessName}
             onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
             required
@@ -116,9 +116,13 @@ export function ContactForm() {
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="barbershop">Barbershop</SelectItem>
-              <SelectItem value="salon">Salon</SelectItem>
-              <SelectItem value="both">Both</SelectItem>
+              <SelectItem value="medical">Doctors' Office / Medical Clinic</SelectItem>
+              <SelectItem value="restaurant">Restaurant</SelectItem>
+              <SelectItem value="barbers-salons">Barbers & Salons</SelectItem>
+              <SelectItem value="residential">Residential Building</SelectItem>
+              <SelectItem value="service-trade">Service Trade Business</SelectItem>
+              <SelectItem value="reception-team">Reception Team</SelectItem>
+              <SelectItem value="dry-cleaner">Dry Cleaner</SelectItem>
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>

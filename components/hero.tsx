@@ -22,7 +22,7 @@ export function Hero() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
-                AI-Powered Appointment Booking
+                AI-Powered Reception & Booking
               </div>
 
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground mb-6 text-balance leading-tight">
@@ -30,8 +30,8 @@ export function Hero() {
               </h1>
 
               <p className="text-xl sm:text-2xl text-muted-foreground mb-10 text-balance leading-relaxed">
-                Voice AI that answers calls, books appointments, and manages your barbershop or salon 24/7. Your clients
-                get instant service, you get more bookings.
+                Voice AI that answers calls, manages requests, and books appointments for doctors' offices, restaurants,
+                barbers & salons, residential buildings, service trades, reception teams, and dry cleaners—24/7.
               </p>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-12">
