@@ -17,7 +17,7 @@ export default function ContactPage() {
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6 text-balance">Get in Touch</h1>
             <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
               Have questions about Avella AI? We'd love to hear from you. Fill out the form below and our team will get
-              back to you within 24 hours.
+              back to you soon.
             </p>
           </div>
 
@@ -115,8 +115,8 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground mb-1">Phone</h3>
-                      <p className="text-muted-foreground">+1 (555) 123-4567</p>
-                      <p className="text-sm text-muted-foreground">Mon-Fri, 9am-6pm EST</p>
+                      <p className="text-muted-foreground">+1 (215) 278-9611</p>
+                      <p className="text-sm text-muted-foreground"></p>
                     </div>
                   </div>
 
