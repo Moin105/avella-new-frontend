@@ -1,6 +1,6 @@
 import { Header } from "@/components/header"
 import { Hero } from "@/components/hero"
-import { Stats } from "@/components/stats"
+import LogoMarquee from "@/components/LogoMarquee"
 import { TabbedSections } from "@/components/tabbed-sections"
 import { UseCases } from "@/components/use-cases"
 import { Testimonials } from "@/components/testimonials"
@@ -12,7 +12,7 @@ export default function Home() {
     <main className="min-h-screen">
       <Header />
       <Hero />
-      <Stats />
+      <LogoMarquee />
       <TabbedSections />
       <UseCases />
       <Testimonials />
