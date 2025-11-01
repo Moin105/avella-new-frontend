@@ -45,11 +45,11 @@ export function Features() {
       <div className="container mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4 text-balance">
-            Everything you need to run your salon
+            Everything you need to run your front office
           </h2>
           <p className="text-xl text-muted-foreground text-balance">
-            Powerful features designed specifically for barbershops and salons. Focus on your craft, let AI handle the
-            rest.
+            Powerful features designed for medical practices, hospitality teams, service trades, property managers, and
+            more. Focus on delivering great experiences while AI handles the rest.
           </p>
         </div>
 
