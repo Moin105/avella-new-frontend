@@ -19,6 +19,9 @@ const money = (n: number) =>
 const clampPercent = (value: number) => Math.min(Math.max(isFinite(value) ? value : 0, 0), 100)
 const clampNonNegative = (value: number) => Math.max(isFinite(value) ? value : 0, 0)
 
+const PLATFORM_SUBSCRIPTION = 300
+const PLATFORM_INTEGRATION_FEE = 1000
+
 type CalculatorValues = {
   calls: number
   missed: number
@@ -47,7 +50,6 @@ type IndustryPreset = {
   description: string
   highlight: string
   defaults: CalculatorValues
-  subscription: number
   assumptions: string[]
 }
 
@@ -89,7 +91,6 @@ const INDUSTRY_PRESETS: Record<IndustryKey, IndustryPreset> = {
       sms_cost_per: 0.02,
       sms_per_booking: 2,
     },
-    subscription: 1399,
     assumptions: [
       "Roughly 35% of inquiries arrive after hours or when staff is already on the line.",
       "Automated visit prep eliminates two minutes of manual chart updates per appointment.",
@@ -123,7 +124,6 @@ const INDUSTRY_PRESETS: Record<IndustryKey, IndustryPreset> = {
       sms_cost_per: 0.015,
       sms_per_booking: 2,
     },
-    subscription: 1099,
     assumptions: [
       "Half of inbound volume spikes on weekends and evenings when staffing is leaner.",
       "Upsell prompts add prix fixe or tasting menus to 8% of automated bookings.",
@@ -157,7 +157,6 @@ const INDUSTRY_PRESETS: Record<IndustryKey, IndustryPreset> = {
       sms_cost_per: 0.018,
       sms_per_booking: 3,
     },
-    subscription: 1299,
     assumptions: [
       "Each leasing inquiry requires calendar coordination plus two follow-up touches on average.",
       "Virtual tour reminders reduce no-show tours by 14% when automation handles follow-ups.",
@@ -191,7 +190,6 @@ const INDUSTRY_PRESETS: Record<IndustryKey, IndustryPreset> = {
       sms_cost_per: 0.017,
       sms_per_booking: 2,
     },
-    subscription: 999,
     assumptions: [
       "Technicians currently spend 6 minutes per inbound call between quoting and scheduling.",
       "Automated estimate reminders lift close rates by roughly 7%.",
@@ -225,7 +223,6 @@ const INDUSTRY_PRESETS: Record<IndustryKey, IndustryPreset> = {
       sms_cost_per: 0.015,
       sms_per_booking: 2,
     },
-    subscription: 899,
     assumptions: [
       "Automated pre-visit reminders save five minutes of manual texting per client.",
       "Membership renewal nudges capture 8% more clients with follow-ups toggled on.",
@@ -248,7 +245,7 @@ const percentFields: (keyof CalculatorValues)[] = [
   "answering_replace",
 ]
 
-const demandFields: FieldConfig[] = [
+const primaryFields: FieldConfig[] = [
   {
     key: "calls",
     label: "Monthly inbound requests",
@@ -257,114 +254,17 @@ const demandFields: FieldConfig[] = [
   {
     key: "missed",
     label: "Missed-call rate (%)",
-    description: "Share of inbound inquiries currently unanswered.",
+    description: "Share of inbound inquiries that currently go unanswered.",
   },
-  {
-    key: "after_hours_share",
-    label: "After-hours share (%)",
-    description: "Portion of volume that arrives outside staffed hours.",
-  },
-  {
-    key: "after_hours_uplift",
-    label: "AI answer lift (%)",
-    description: "Expected improvement in answer rate with AI coverage.",
-  },
-  {
-    key: "ai_conv",
-    label: "AI booking rate (%)",
-    description: "Close rate when AI handles the inquiry end-to-end.",
-  },
-  {
-    key: "no_show_base",
-    label: "Current no-show rate (%)",
-    description: "Share of booked appointments that no-show today.",
-  },
-  {
-    key: "no_show_new",
-    label: "AI no-show rate (%)",
-    description: "Projected no-show rate with AI workflows enabled.",
-  },
-]
-
-const unitFields: FieldConfig[] = [
   {
     key: "ticket",
     label: "Revenue per completed booking ($)",
     description: "Average ticket size, visit value, or contract worth.",
   },
   {
-    key: "vc",
-    label: "Variable cost per booking ($)",
-    description: "Consumables or service costs tied to each completed job.",
-    step: 1,
-  },
-  {
-    key: "capacity",
-    label: "Monthly capacity (completed)",
-    description: "Maximum completed units you can fulfill in a month.",
-  },
-]
-
-const laborFields: FieldConfig[] = [
-  {
-    key: "wage",
-    label: "Loaded wage ($/hr)",
-    description: "Fully-loaded hourly cost for live staff.",
-    step: 1,
-  },
-  {
-    key: "min_per_answer",
-    label: "Minutes per answered call",
-    description: "Average handle time for a live agent.",
-    step: 0.1,
-  },
-  {
-    key: "min_per_booking",
-    label: "Minutes per booking",
-    description: "Time to coordinate each reservation/job manually.",
-    step: 0.1,
-  },
-  {
     key: "pct_ai_handled",
-    label: "% of calls handled by AI",
-    description: "Share of answered calls the AI will fully manage.",
-  },
-]
-
-const costFields: FieldConfig[] = [
-  {
-    key: "answering_cost",
-    label: "Answering service spend ($/mo)",
-    description: "Monthly spend on any external answering provider.",
-  },
-  {
-    key: "answering_replace",
-    label: "% of answering spend replaced",
-    description: "Portion of that service you expect to replace with AI.",
-  },
-  {
-    key: "ai_mins_per_call",
-    label: "AI minutes per handled call",
-    description: "Average call duration when AI engages callers.",
-    step: 0.1,
-  },
-  {
-    key: "ai_cost_per_min",
-    label: "AI platform cost ($/min)",
-    description: "Usage-based platform fee per AI minute.",
-    step: 0.001,
-  },
-  {
-    key: "sms_cost_per",
-    label: "SMS cost ($/message)",
-    description: "Cost per SMS sent during booking flows.",
-    step: 0.001,
-  },
-  {
-    key: "sms_per_booking",
-    label: "SMS per booking",
-    description: "Average text messages per completed booking.",
-    step: 0.1,
+    label: "% of calls AI can fully handle",
+    description: "Portion of answered calls Avella can complete without live staff.",
   },
 ]
 
@@ -409,7 +309,7 @@ const ROIIndustryCalculator = () => {
       PAI: values.pct_ai_handled / 100,
       ASbase: values.answering_cost,
       ASrep: values.answering_replace / 100,
-      AIsub: selectedIndustry.subscription,
+      AIsub: PLATFORM_SUBSCRIPTION,
       mAI: values.ai_mins_per_call,
       pMin: values.ai_cost_per_min,
       SMSpp: values.sms_cost_per,
@@ -419,24 +319,26 @@ const ROIIndustryCalculator = () => {
     const safeInputs = sanitize(inputs)
     const res = calcCore(safeInputs)
 
-    const grossMonthly = res.dGP + res.laborSaved + res.answerSvcSaved + res.AIcost
-    const subscription = selectedIndustry.subscription
+    const grossMonthly = res.dGP + res.laborSaved + res.answerSvcSaved
+    const monthlyPlatformCost = res.AIcost
     const netMonthly = res.net
-    const roiGross = subscription > 0 ? grossMonthly / subscription : null
-    const roiNet = subscription > 0 ? netMonthly / subscription : null
-    const paybackDays = res.paybackDays
+    const roiGross = monthlyPlatformCost > 0 ? grossMonthly / monthlyPlatformCost : null
+    const roiNet = monthlyPlatformCost > 0 ? netMonthly / monthlyPlatformCost : null
+    const paybackDays = netMonthly > 0 ? Math.ceil((monthlyPlatformCost + PLATFORM_INTEGRATION_FEE) / (netMonthly / 30)) : null
 
     return {
       grossMonthly,
       netMonthly,
-      netAnnual: netMonthly * 12,
-      subscription,
+      netAnnual: netMonthly * 12 - PLATFORM_INTEGRATION_FEE,
+      monthlyPlatformCost,
+      integrationFee: PLATFORM_INTEGRATION_FEE,
+      firstMonthInvestment: monthlyPlatformCost + PLATFORM_INTEGRATION_FEE,
       roiGross,
       roiNet,
       paybackDays,
       res,
     }
-  }, [selectedIndustry.subscription, values])
+  }, [values])
 
   const renderField = (config: FieldConfig) => {
     const isPercent = percentFields.includes(config.key)
@@ -465,8 +367,8 @@ const ROIIndustryCalculator = () => {
         <div className="space-y-3">
           <CardTitle className="text-3xl font-semibold text-foreground">Project Your ROI with Avella AI</CardTitle>
           <CardDescription className="max-w-2xl text-base leading-relaxed">
-            Select the industry that matches your business, tune the assumptions, and instantly see how Avella unlocks new revenue
-            while shrinking labor spend. All numbers are editable so you can mirror your exact operation.
+            Select the industry that matches your business and adjust the four quick inputs to mirror your operation. We pre-fill
+            the detailed assumptions behind the scenes so you can focus on the levers that matter most.
           </CardDescription>
           <div className="inline-flex items-center gap-2 rounded-full border border-dashed border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary">
             <Info className="h-4 w-4" />
@@ -494,25 +396,18 @@ const ROIIndustryCalculator = () => {
         <div className="grid gap-8 lg:grid-cols-[1.35fr_minmax(0,0.75fr)]">
           <div className="space-y-6">
             <div className="grid gap-5 sm:grid-cols-2">
-              {demandFields.map(renderField)}
-            </div>
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              {unitFields.map(renderField)}
-            </div>
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              {laborFields.map((field) =>
+              {primaryFields.map((field) =>
                 renderField({
                   ...field,
-                  step: field.step ?? (field.key === "pct_ai_handled" ? 1 : undefined),
+                  step: field.step ?? (percentFields.includes(field.key) ? 1 : undefined),
                 }),
               )}
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              {costFields.map(renderField)}
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Advanced conversion, staffing, and cost assumptions stay aligned with each industry preset. Tweak the key drivers
+              above or reset everything with a single click.
+            </p>
 
             <div className="flex flex-wrap items-center gap-3">
               <Button type="button" variant="secondary" onClick={() => setValues({ ...selectedIndustry.defaults })}>
@@ -552,8 +447,8 @@ const ROIIndustryCalculator = () => {
                         <span className="text-lg font-semibold">{money(Math.round(calculations.grossMonthly))}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Subscription</span>
-                        <span className="text-lg font-semibold">-{money(Math.round(calculations.subscription))}</span>
+                        <span className="text-sm text-muted-foreground">Platform spend / month</span>
+                        <span className="text-lg font-semibold">-{money(Math.round(calculations.monthlyPlatformCost))}</span>
                       </div>
                       <div className="flex items-center justify-between border-t pt-2">
                         <span className="text-sm font-medium">Net impact / month</span>
@@ -566,14 +461,18 @@ const ROIIndustryCalculator = () => {
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Net impact / year</span>
+                        <span className="text-sm text-muted-foreground">Net impact / year (after integration)</span>
                         <span
                           className={
-                            "text-lg font-semibold " + (calculations.netMonthly >= 0 ? "text-emerald-600" : "text-rose-600")
+                            "text-lg font-semibold " + (calculations.netAnnual >= 0 ? "text-emerald-600" : "text-rose-600")
                           }
                         >
                           {money(Math.round(calculations.netAnnual))}
                         </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">One-time integration (month 1)</span>
+                        <span className="text-lg font-semibold">-{money(Math.round(calculations.integrationFee))}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">ROI (gross)</span>
@@ -619,10 +518,13 @@ const ROIIndustryCalculator = () => {
                           <span>{money(Math.round(calculations.res.answerSvcSaved))}</span>
                         </li>
                         <li className="flex items-center justify-between">
-                          <span>AI platform cost</span>
+                          <span>Platform spend (monthly)</span>
                           <span>-{money(Math.round(calculations.res.AIcost))}</span>
                         </li>
                       </ul>
+                      <p className="text-xs text-muted-foreground">
+                        First-month platform investment (including integration): {money(Math.round(calculations.firstMonthInvestment))}.
+                      </p>
                     </div>
                   </motion.div>
                 </TabsContent>
@@ -640,7 +542,8 @@ const ROIIndustryCalculator = () => {
                         {money(Math.round(calculations.grossMonthly * 12))}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        Net impact estimate: {money(Math.round(calculations.netAnnual))} after subscription fees.
+                        Net impact estimate (year 1): {money(Math.round(calculations.netAnnual))} after monthly platform spend and
+                        the one-time integration fee.
                       </p>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -652,7 +555,7 @@ const ROIIndustryCalculator = () => {
                             : "—"}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Compared to an estimated platform investment of {money(Math.round(calculations.subscription))} / month.
+                          Compared to about {money(Math.round(calculations.monthlyPlatformCost))} in monthly platform spend.
                         </p>
                       </div>
                       <div className="rounded-lg border border-border/60 bg-background p-4">
@@ -661,7 +564,7 @@ const ROIIndustryCalculator = () => {
                           {calculations.paybackDays ? `${calculations.paybackDays} days` : "— (no payback at current inputs)"}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          How quickly savings and revenue cover one month of Avella.
+                          How quickly savings and revenue cover the integration fee plus the first month of Avella.
                         </p>
                       </div>
                     </div>
