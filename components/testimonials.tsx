@@ -2,24 +2,24 @@ export function Testimonials() {
   const testimonials = [
     {
       quote:
-        "Avella AI has completely transformed how we handle appointments. We've seen a 40% reduction in no-shows and our phone lines are finally free!",
-      author: "Marcus Johnson",
-      role: "Owner, Elite Cuts Barbershop",
-      location: "Los Angeles, CA",
+        "Our physicians love that Avella AI can capture every call, collect intake details, and escalate urgent cases instantly. Patients get answers fast and our staff can finally breathe.",
+      author: "Dr. Alicia Nguyen",
+      role: "Practice Director, Crescent Medical Clinic",
+      location: "Houston, TX",
     },
     {
       quote:
-        "The AI sounds so natural, our clients don't even realize they're talking to a bot. It's like having a full-time receptionist without the overhead.",
-      author: "Sarah Chen",
-      role: "Manager, Luxe Hair Salon",
-      location: "New York, NY",
+        "Dinner rush used to overwhelm the team. Now Avella manages reservations, large-party requests, and waitlist updates without missing a beat.",
+      author: "Marco Rivera",
+      role: "General Manager, Lumen Bistro",
+      location: "Chicago, IL",
     },
     {
       quote:
-        "We were losing thousands in missed appointments. Avella AI pays for itself within the first month. Best investment we've made.",
-      author: "David Rodriguez",
-      role: "Owner, The Grooming Lounge",
-      location: "Miami, FL",
+        "We support thousands of residents, vendors, and deliveries. Avella handles it all—maintenance scheduling, amenity bookings, and after-hours triage—while keeping our brand voice intact.",
+      author: "Jordan Blake",
+      role: "Operations Lead, Skyline Residences",
+      location: "Seattle, WA",
     },
   ]
 
@@ -28,7 +28,7 @@ export function Testimonials() {
       <div className="container mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
-            Trusted by Barbershops & Salons Nationwide
+            Trusted by Customer-Obsessed Teams Everywhere
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             See what business owners are saying about Avella AI
