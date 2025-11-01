@@ -80,6 +80,7 @@ export function UseCases() {
             strokeLinejoin="round"
             strokeWidth={2}
             d="M7 9a5 5 0 0110 0v2h1a3 3 0 013 3v4h-4v-2H7v2H3v-4a3 3 0 013-3h1V9z"
+            d="M3 7h18M5 7l1 12h12l1-12M10 11h4m-5 4h6"
           />
         </svg>
       ),
@@ -87,6 +88,8 @@ export function UseCases() {
     {
       title: "Dry Cleaners",
       description: "Streamline drop-off scheduling, delivery routes, and customer updates without missing a call.",
+      title: "Reception Teams",
+      description: "Give front desks superpowers with overflow support, call routing, and smart follow-ups.",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -94,6 +97,7 @@ export function UseCases() {
             strokeLinejoin="round"
             strokeWidth={2}
             d="M4 4h16l-2 14H6L4 4zm4 4h8m-7 4h6"
+            d="M7 9a5 5 0 0110 0v2h1a3 3 0 013 3v4h-4v-2H7v2H3v-4a3 3 0 013-3h1V9z"
           />
         </svg>
       ),
@@ -102,6 +106,8 @@ export function UseCases() {
       title: "Other Industries",
       description:
         "Have phones, bookings, or inbound requests to juggle? We’ll tailor the agent to your workflow—real estate, gyms, auto shops, legal, education, nonprofits, and more. Tell us your process and we’ll map it end-to-end.",
+      title: "Dry Cleaners",
+      description: "Streamline drop-off scheduling, delivery routes, and customer updates without missing a call.",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -109,6 +115,7 @@ export function UseCases() {
             strokeLinejoin="round"
             strokeWidth={2}
             d="M12 6v12m6-6H6"
+            d="M4 4h16l-2 14H6L4 4zm4 4h8m-7 4h6"
           />
         </svg>
       ),
