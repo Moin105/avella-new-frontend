@@ -10,9 +10,9 @@ import { TenantProvider } from "./contexts/TenantContext"
 import { Toaster } from "./components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: "Avella AI - Voice AI Appointment Booking for Barbershops & Salons",
+  title: "Avella AI - Voice AI Appointment Booking for Businesses and Health Professionals",
   description:
-    "Transform your barbershop or salon with AI-powered appointment booking and CRM. Never miss a booking again with 24/7 voice AI assistance.",
+    "Transform your business/office with AI-powered appointment booking. Never miss a booking again with 24/7 voice AI assistance.",
   generator: "v0.app",
   icons: {
     icon: "/avella-logo-icon.png",
