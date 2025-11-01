@@ -11,7 +11,7 @@ export function Footer() {
               <span className="text-xl font-bold text-foreground">Avella AI</span>
             </div>
             <p className="text-muted-foreground max-w-md leading-relaxed">
-              Voice AI appointment booking and CRM for barbershops and salons. Never miss a booking again.
+              Voice AI appointment booking for businesses and offices. Never miss a booking again.
             </p>
           </div>
 
