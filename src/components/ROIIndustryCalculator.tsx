@@ -25,6 +25,12 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 })
 
+const money = (n: number) =>
+  `$${(isFinite(n) ? n : 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+
+const clamp = (v: number, min = 0, max = Number.POSITIVE_INFINITY) =>
+  Math.max(min, Math.min(max, isFinite(v) ? v : 0))
+
 type IndustryPreset = {
   label: string
   description: string
@@ -197,24 +203,53 @@ const ROIIndustryCalculator = () => {
   }, [industry])
 
   const calculations = useMemo(() => {
-    const automationFraction = automationRate / 100
-    const baselineConversion = conversionRate / 100
+    const guarded = {
+      monthlyLeads,
+      avgRevenue,
+      hourlyCost,
+      conversionRate,
+      automationRate,
+    }
+
+    ;["conversionRate", "automationRate"].forEach((key) => {
+      guarded[key as "conversionRate" | "automationRate"] = clamp(
+        Number(guarded[key as keyof typeof guarded] ?? 0),
+        0,
+        100,
+      )
+    })
+
+    ;["monthlyLeads", "avgRevenue", "hourlyCost"].forEach((key) => {
+      guarded[key as "monthlyLeads" | "avgRevenue" | "hourlyCost"] = clamp(
+        Number(guarded[key as keyof typeof guarded] ?? 0),
+        0,
+      )
+    })
+
+    const automationFraction = guarded.automationRate / 100
+    const baselineConversion = guarded.conversionRate / 100
     const followUpLift = includeFollowUps ? selectedIndustry.metrics.followUpLift : 0
     const effectiveConversionRate = baselineConversion + automationFraction * followUpLift
-    const baselineConverted = monthlyLeads * baselineConversion
-    const projectedConverted = monthlyLeads * effectiveConversionRate
+    const baselineConverted = guarded.monthlyLeads * baselineConversion
+    const projectedConverted = guarded.monthlyLeads * effectiveConversionRate
     const incrementalConversions = Math.max(projectedConverted - baselineConverted, 0)
 
-    const incrementalRevenue = incrementalConversions * avgRevenue
-    const hoursSaved = ((monthlyLeads * selectedIndustry.metrics.minutesPerInteraction) / 60) * automationFraction
-    const laborSavings = hoursSaved * hourlyCost
-    const monthlyImpact = incrementalRevenue + laborSavings
-    const annualImpact = monthlyImpact * 12
+    const incrementalRevenue = incrementalConversions * guarded.avgRevenue
+    const hoursSaved =
+      ((guarded.monthlyLeads * selectedIndustry.metrics.minutesPerInteraction) / 60) * automationFraction
+    const laborSavings = hoursSaved * guarded.hourlyCost
+    const grossMonthly = incrementalRevenue + laborSavings
     const subscription = selectedIndustry.metrics.subscription
-    const roiMultiple = subscription > 0 ? monthlyImpact / subscription : 0
-    const paybackDays = monthlyImpact > 0 ? Math.max(Math.ceil((subscription / monthlyImpact) * 30), 1) : null
+    const grossMonthlyClamped = Math.max(0, grossMonthly)
+    const netMonthly = grossMonthlyClamped - subscription
+    const grossAnnual = grossMonthlyClamped * 12
+    const netAnnual = netMonthly * 12
+    const roiGross = subscription > 0 ? grossMonthlyClamped / subscription : null
+    const roiNet = subscription > 0 ? netMonthly / subscription : null
+    const paybackDays = netMonthly > 0 ? Math.ceil((subscription / netMonthly) * 30) : null
 
-    const baselineLaborCost = (monthlyLeads * selectedIndustry.metrics.minutesPerInteraction * hourlyCost) / 60
+    const baselineLaborCost =
+      (guarded.monthlyLeads * selectedIndustry.metrics.minutesPerInteraction * guarded.hourlyCost) / 60
 
     return {
       automationFraction,
@@ -222,9 +257,12 @@ const ROIIndustryCalculator = () => {
       incrementalRevenue,
       hoursSaved,
       laborSavings,
-      monthlyImpact,
-      annualImpact,
-      roiMultiple,
+      grossMonthly: grossMonthlyClamped,
+      netMonthly,
+      grossAnnual,
+      netAnnual,
+      roiGross,
+      roiNet,
       paybackDays,
       baselineLaborCost,
       baselineConverted,
@@ -381,7 +419,16 @@ const ROIIndustryCalculator = () => {
 
           <div className="space-y-6 rounded-lg border border-border/60 bg-background/80 p-6 shadow-sm">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Results snapshot</h3>
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-lg font-semibold text-foreground">Results snapshot</h3>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-muted-foreground underline decoration-dotted underline-offset-4"
+                  title="Estimates respond most to missed-call rate, conversion uplift, average ticket value, and the no-show delta you assume."
+                >
+                  What affects results?
+                </button>
+              </div>
               <Tabs defaultValue="monthly" className="space-y-4">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="monthly">Monthly</TabsTrigger>
@@ -395,15 +442,69 @@ const ROIIndustryCalculator = () => {
                     transition={{ duration: 0.25 }}
                     className="grid gap-4"
                   >
-                    <div className="rounded-lg border border-primary/40 bg-primary/10 p-4">
-                      <p className={metricLabelClass}>Total monthly impact</p>
-                      <p className={`${metricValueClass} text-primary`}>
-                        {currencyFormatter.format(calculations.monthlyImpact)}
-                      </p>
+                    <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/10 p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Gross impact / month</span>
+                        <span className="text-lg font-semibold">{money(Math.round(calculations.grossMonthly))}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Subscription</span>
+                        <span className="text-lg font-semibold">-{money(Math.round(calculations.subscription))}</span>
+                      </div>
+                      <div className="flex items-center justify-between border-t pt-2">
+                        <span className="text-sm font-medium">Net impact / month</span>
+                        <span
+                          className={
+                            "text-lg font-semibold " +
+                            (calculations.netMonthly >= 0 ? "text-emerald-600" : "text-rose-600")
+                          }
+                        >
+                          {money(Math.round(calculations.netMonthly))}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Net impact / year</span>
+                        <span
+                          className={
+                            "text-lg font-semibold " +
+                            (calculations.netMonthly >= 0 ? "text-emerald-600" : "text-rose-600")
+                          }
+                        >
+                          {money(Math.round(calculations.netMonthly * 12))}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">ROI (gross)</span>
+                        <span className="text-lg font-semibold">
+                          {calculations.roiGross !== null && isFinite(calculations.roiGross)
+                            ? `${calculations.roiGross.toFixed(1)}×`
+                            : "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">ROI (net)</span>
+                        <span className="text-lg font-semibold">
+                          {calculations.roiNet !== null && isFinite(calculations.roiNet)
+                            ? `${calculations.roiNet.toFixed(1)}×`
+                            : "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Payback (est.)</span>
+                        <span className="text-lg font-semibold">
+                          {calculations.paybackDays
+                            ? `${calculations.paybackDays} days`
+                            : "— (no payback at current inputs)"}
+                        </span>
+                      </div>
+                      {calculations.netMonthly <= 0 && (
+                        <div className="text-xs text-rose-600">
+                          Net negative at current inputs—try adjusting missed calls or ticket size.
+                        </div>
+                      )}
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {currencyFormatter.format(calculations.laborSavings)} in labor savings +
-                        {" "}
-                        {currencyFormatter.format(calculations.incrementalRevenue)} in new revenue.
+                        {money(Math.round(calculations.laborSavings))} in labor savings +{" "}
+                        {money(Math.round(calculations.incrementalRevenue))} in new revenue.
                       </p>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -432,28 +533,32 @@ const ROIIndustryCalculator = () => {
                     className="grid gap-4"
                   >
                     <div className="rounded-lg border border-primary/40 bg-primary/10 p-4">
-                      <p className={metricLabelClass}>Total annual impact</p>
+                      <p className={metricLabelClass}>Gross impact / year</p>
                       <p className={`${metricValueClass} text-primary`}>
-                        {currencyFormatter.format(calculations.annualImpact)}
+                        {money(Math.round(calculations.grossAnnual))}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        Includes subscription cost of {currencyFormatter.format(calculations.subscription)} per month.
+                        Net impact estimate: {money(Math.round(calculations.netAnnual))} after subscription fees.
                       </p>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="rounded-lg border border-border/60 bg-background p-4">
                         <p className={metricLabelClass}>ROI multiple</p>
                         <p className={metricValueClass}>
-                          {calculations.roiMultiple > 0 ? calculations.roiMultiple.toFixed(1) + "x" : "—"}
+                          {calculations.roiGross !== null && isFinite(calculations.roiGross)
+                            ? calculations.roiGross.toFixed(1) + "x"
+                            : "—"}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Compared to an estimated platform investment of {currencyFormatter.format(calculations.subscription)} / month.
+                          Compared to an estimated platform investment of {money(Math.round(calculations.subscription))} / month.
                         </p>
                       </div>
                       <div className="rounded-lg border border-border/60 bg-background p-4">
                         <p className={metricLabelClass}>Payback period</p>
                         <p className={metricValueClass}>
-                          {calculations.paybackDays ? `${calculations.paybackDays} days` : "—"}
+                          {calculations.paybackDays
+                            ? `${calculations.paybackDays} days`
+                            : "— (no payback at current inputs)"}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">How quickly savings and revenue cover one month of Avella.</p>
                       </div>
@@ -461,6 +566,12 @@ const ROIIndustryCalculator = () => {
                   </motion.div>
                 </TabsContent>
               </Tabs>
+              <p className="text-xs text-muted-foreground pt-3">
+                <strong>Disclaimer:</strong> This calculator provides directional estimates only and is for informational
+                purposes. It does not guarantee outcomes, savings, or earnings. Actual results depend on your operations,
+                pricing, demand, staffing, compliance, and third-party systems. Nothing herein is financial, legal, or medical
+                advice. By using this tool, you agree that Avella AI makes no warranties or guarantees of performance.
+              </p>
             </div>
           </div>
         </div>
