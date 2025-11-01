@@ -9,67 +9,87 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-})
-
-const percentFormatter = new Intl.NumberFormat("en-US", {
-  style: "percent",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-})
+import { calcCore, sanitize, type Inputs } from "@/lib/roi"
 
 const money = (n: number) =>
   `$${(isFinite(n) ? n : 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
 
-const clamp = (v: number, min = 0, max = Number.POSITIVE_INFINITY) =>
-  Math.max(min, Math.min(max, isFinite(v) ? v : 0))
+const clampPercent = (value: number) => Math.min(Math.max(isFinite(value) ? value : 0, 0), 100)
+const clampNonNegative = (value: number) => Math.max(isFinite(value) ? value : 0, 0)
+
+type CalculatorValues = {
+  calls: number
+  missed: number
+  after_hours_share: number
+  after_hours_uplift: number
+  ai_conv: number
+  no_show_base: number
+  no_show_new: number
+  ticket: number
+  vc: number
+  capacity: number
+  wage: number
+  min_per_answer: number
+  min_per_booking: number
+  pct_ai_handled: number
+  answering_cost: number
+  answering_replace: number
+  ai_mins_per_call: number
+  ai_cost_per_min: number
+  sms_cost_per: number
+  sms_per_booking: number
+}
 
 type IndustryPreset = {
   label: string
   description: string
   highlight: string
-  defaults: {
-    monthlyLeads: number
-    avgRevenue: number
-    hourlyCost: number
-    conversionRate: number
-    automationRate: number
-    includeFollowUps: boolean
-  }
-  metrics: {
-    minutesPerInteraction: number
-    followUpLift: number
-    subscription: number
-  }
+  defaults: CalculatorValues
+  subscription: number
   assumptions: string[]
 }
 
-const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
+type IndustryKey = "healthcare" | "hospitality" | "property" | "services" | "wellness"
+
+type FieldConfig = {
+  key: keyof CalculatorValues
+  label: string
+  description?: string
+  step?: number
+}
+
+const INDUSTRY_PRESETS: Record<IndustryKey, IndustryPreset> = {
   healthcare: {
     label: "Healthcare & Clinics",
     description:
       "Give front-desk teams an always-on assistant that books visits, handles triage questions, and closes missed calls automatically.",
-    highlight: "Practices typically recover two full-time schedules each month by deflecting voicemails and after-hours requests.",
+    highlight:
+      "Practices typically recover two full-time schedules each month by deflecting voicemails and after-hours requests.",
     defaults: {
-      monthlyLeads: 450,
-      avgRevenue: 210,
-      hourlyCost: 22,
-      conversionRate: 28,
-      automationRate: 65,
-      includeFollowUps: true,
+      calls: 450,
+      missed: 32,
+      after_hours_share: 35,
+      after_hours_uplift: 18,
+      ai_conv: 42,
+      no_show_base: 20,
+      no_show_new: 13,
+      ticket: 210,
+      vc: 60,
+      capacity: 420,
+      wage: 22,
+      min_per_answer: 3,
+      min_per_booking: 4,
+      pct_ai_handled: 65,
+      answering_cost: 900,
+      answering_replace: 100,
+      ai_mins_per_call: 2,
+      ai_cost_per_min: 0.02,
+      sms_cost_per: 0.02,
+      sms_per_booking: 2,
     },
-    metrics: {
-      minutesPerInteraction: 7,
-      followUpLift: 0.12,
-      subscription: 1399,
-    },
+    subscription: 1399,
     assumptions: [
       "Roughly 35% of inquiries arrive after hours or when staff is already on the line.",
       "Automated visit prep eliminates two minutes of manual chart updates per appointment.",
@@ -82,18 +102,28 @@ const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
       "Automate reservations, private-event requests, and waitlist updates so hosts can focus on the guest experience.",
     highlight: "Operators report fewer walk-outs and 20% faster table turns after automating confirmations.",
     defaults: {
-      monthlyLeads: 360,
-      avgRevenue: 95,
-      hourlyCost: 18,
-      conversionRate: 22,
-      automationRate: 60,
-      includeFollowUps: true,
+      calls: 360,
+      missed: 28,
+      after_hours_share: 45,
+      after_hours_uplift: 20,
+      ai_conv: 38,
+      no_show_base: 18,
+      no_show_new: 12,
+      ticket: 95,
+      vc: 30,
+      capacity: 340,
+      wage: 18,
+      min_per_answer: 2,
+      min_per_booking: 3,
+      pct_ai_handled: 60,
+      answering_cost: 720,
+      answering_replace: 100,
+      ai_mins_per_call: 1.8,
+      ai_cost_per_min: 0.018,
+      sms_cost_per: 0.015,
+      sms_per_booking: 2,
     },
-    metrics: {
-      minutesPerInteraction: 5,
-      followUpLift: 0.09,
-      subscription: 1099,
-    },
+    subscription: 1099,
     assumptions: [
       "Half of inbound volume spikes on weekends and evenings when staffing is leaner.",
       "Upsell prompts add prix fixe or tasting menus to 8% of automated bookings.",
@@ -106,18 +136,28 @@ const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
       "Capture tours, maintenance issues, and resident questions without overwhelming on-site teams.",
     highlight: "Communities using Avella cut voicemail backlogs to near zero within the first 30 days.",
     defaults: {
-      monthlyLeads: 280,
-      avgRevenue: 350,
-      hourlyCost: 21,
-      conversionRate: 18,
-      automationRate: 55,
-      includeFollowUps: true,
+      calls: 280,
+      missed: 35,
+      after_hours_share: 40,
+      after_hours_uplift: 18,
+      ai_conv: 32,
+      no_show_base: 25,
+      no_show_new: 17,
+      ticket: 350,
+      vc: 120,
+      capacity: 260,
+      wage: 21,
+      min_per_answer: 4,
+      min_per_booking: 6,
+      pct_ai_handled: 58,
+      answering_cost: 680,
+      answering_replace: 100,
+      ai_mins_per_call: 2.4,
+      ai_cost_per_min: 0.022,
+      sms_cost_per: 0.018,
+      sms_per_booking: 3,
     },
-    metrics: {
-      minutesPerInteraction: 8,
-      followUpLift: 0.1,
-      subscription: 1299,
-    },
+    subscription: 1299,
     assumptions: [
       "Each leasing inquiry requires calendar coordination plus two follow-up touches on average.",
       "Virtual tour reminders reduce no-show tours by 14% when automation handles follow-ups.",
@@ -130,18 +170,28 @@ const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
       "Route jobs, confirm schedules, and dispatch updates while your crews stay focused on work orders.",
     highlight: "Most teams reclaim an extra 40 labor hours per month by eliminating phone tag.",
     defaults: {
-      monthlyLeads: 320,
-      avgRevenue: 425,
-      hourlyCost: 26,
-      conversionRate: 24,
-      automationRate: 58,
-      includeFollowUps: true,
+      calls: 320,
+      missed: 30,
+      after_hours_share: 38,
+      after_hours_uplift: 16,
+      ai_conv: 34,
+      no_show_base: 22,
+      no_show_new: 15,
+      ticket: 425,
+      vc: 160,
+      capacity: 300,
+      wage: 26,
+      min_per_answer: 3,
+      min_per_booking: 5,
+      pct_ai_handled: 58,
+      answering_cost: 780,
+      answering_replace: 100,
+      ai_mins_per_call: 2.2,
+      ai_cost_per_min: 0.02,
+      sms_cost_per: 0.017,
+      sms_per_booking: 2,
     },
-    metrics: {
-      minutesPerInteraction: 6,
-      followUpLift: 0.07,
-      subscription: 999,
-    },
+    subscription: 999,
     assumptions: [
       "Technicians currently spend 6 minutes per inbound call between quoting and scheduling.",
       "Automated estimate reminders lift close rates by roughly 7%.",
@@ -154,18 +204,28 @@ const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
       "Book appointments, manage memberships, and nurture referrals without leaving clients waiting.",
     highlight: "Studios report 18% more repeat bookings when nurture cadences stay on automatically.",
     defaults: {
-      monthlyLeads: 400,
-      avgRevenue: 140,
-      hourlyCost: 20,
-      conversionRate: 30,
-      automationRate: 62,
-      includeFollowUps: true,
+      calls: 400,
+      missed: 33,
+      after_hours_share: 42,
+      after_hours_uplift: 17,
+      ai_conv: 36,
+      no_show_base: 21,
+      no_show_new: 14,
+      ticket: 140,
+      vc: 40,
+      capacity: 380,
+      wage: 20,
+      min_per_answer: 2.5,
+      min_per_booking: 3.5,
+      pct_ai_handled: 62,
+      answering_cost: 640,
+      answering_replace: 100,
+      ai_mins_per_call: 2,
+      ai_cost_per_min: 0.019,
+      sms_cost_per: 0.015,
+      sms_per_booking: 2,
     },
-    metrics: {
-      minutesPerInteraction: 5,
-      followUpLift: 0.08,
-      subscription: 899,
-    },
+    subscription: 899,
     assumptions: [
       "Automated pre-visit reminders save five minutes of manual texting per client.",
       "Membership renewal nudges capture 8% more clients with follow-ups toggled on.",
@@ -174,130 +234,236 @@ const INDUSTRY_PRESETS: Record<string, IndustryPreset> = {
   },
 }
 
-type IndustryKey = keyof typeof INDUSTRY_PRESETS
-
 const metricLabelClass = "text-xs font-medium uppercase tracking-wide text-muted-foreground"
 const metricValueClass = "text-2xl font-semibold text-foreground"
 
+const percentFields: (keyof CalculatorValues)[] = [
+  "missed",
+  "after_hours_share",
+  "after_hours_uplift",
+  "ai_conv",
+  "no_show_base",
+  "no_show_new",
+  "pct_ai_handled",
+  "answering_replace",
+]
+
+const demandFields: FieldConfig[] = [
+  {
+    key: "calls",
+    label: "Monthly inbound requests",
+    description: "Calls, texts, chats, or form fills Avella can capture each month.",
+  },
+  {
+    key: "missed",
+    label: "Missed-call rate (%)",
+    description: "Share of inbound inquiries currently unanswered.",
+  },
+  {
+    key: "after_hours_share",
+    label: "After-hours share (%)",
+    description: "Portion of volume that arrives outside staffed hours.",
+  },
+  {
+    key: "after_hours_uplift",
+    label: "AI answer lift (%)",
+    description: "Expected improvement in answer rate with AI coverage.",
+  },
+  {
+    key: "ai_conv",
+    label: "AI booking rate (%)",
+    description: "Close rate when AI handles the inquiry end-to-end.",
+  },
+  {
+    key: "no_show_base",
+    label: "Current no-show rate (%)",
+    description: "Share of booked appointments that no-show today.",
+  },
+  {
+    key: "no_show_new",
+    label: "AI no-show rate (%)",
+    description: "Projected no-show rate with AI workflows enabled.",
+  },
+]
+
+const unitFields: FieldConfig[] = [
+  {
+    key: "ticket",
+    label: "Revenue per completed booking ($)",
+    description: "Average ticket size, visit value, or contract worth.",
+  },
+  {
+    key: "vc",
+    label: "Variable cost per booking ($)",
+    description: "Consumables or service costs tied to each completed job.",
+    step: 1,
+  },
+  {
+    key: "capacity",
+    label: "Monthly capacity (completed)",
+    description: "Maximum completed units you can fulfill in a month.",
+  },
+]
+
+const laborFields: FieldConfig[] = [
+  {
+    key: "wage",
+    label: "Loaded wage ($/hr)",
+    description: "Fully-loaded hourly cost for live staff.",
+    step: 1,
+  },
+  {
+    key: "min_per_answer",
+    label: "Minutes per answered call",
+    description: "Average handle time for a live agent.",
+    step: 0.1,
+  },
+  {
+    key: "min_per_booking",
+    label: "Minutes per booking",
+    description: "Time to coordinate each reservation/job manually.",
+    step: 0.1,
+  },
+  {
+    key: "pct_ai_handled",
+    label: "% of calls handled by AI",
+    description: "Share of answered calls the AI will fully manage.",
+  },
+]
+
+const costFields: FieldConfig[] = [
+  {
+    key: "answering_cost",
+    label: "Answering service spend ($/mo)",
+    description: "Monthly spend on any external answering provider.",
+  },
+  {
+    key: "answering_replace",
+    label: "% of answering spend replaced",
+    description: "Portion of that service you expect to replace with AI.",
+  },
+  {
+    key: "ai_mins_per_call",
+    label: "AI minutes per handled call",
+    description: "Average call duration when AI engages callers.",
+    step: 0.1,
+  },
+  {
+    key: "ai_cost_per_min",
+    label: "AI platform cost ($/min)",
+    description: "Usage-based platform fee per AI minute.",
+    step: 0.001,
+  },
+  {
+    key: "sms_cost_per",
+    label: "SMS cost ($/message)",
+    description: "Cost per SMS sent during booking flows.",
+    step: 0.001,
+  },
+  {
+    key: "sms_per_booking",
+    label: "SMS per booking",
+    description: "Average text messages per completed booking.",
+    step: 0.1,
+  },
+]
+
 const ROIIndustryCalculator = () => {
   const [industry, setIndustry] = useState<IndustryKey>("healthcare")
-  const [monthlyLeads, setMonthlyLeads] = useState<number>(INDUSTRY_PRESETS.healthcare.defaults.monthlyLeads)
-  const [avgRevenue, setAvgRevenue] = useState<number>(INDUSTRY_PRESETS.healthcare.defaults.avgRevenue)
-  const [hourlyCost, setHourlyCost] = useState<number>(INDUSTRY_PRESETS.healthcare.defaults.hourlyCost)
-  const [conversionRate, setConversionRate] = useState<number>(INDUSTRY_PRESETS.healthcare.defaults.conversionRate)
-  const [automationRate, setAutomationRate] = useState<number>(INDUSTRY_PRESETS.healthcare.defaults.automationRate)
-  const [includeFollowUps, setIncludeFollowUps] = useState<boolean>(
-    INDUSTRY_PRESETS.healthcare.defaults.includeFollowUps,
-  )
+  const [values, setValues] = useState<CalculatorValues>({ ...INDUSTRY_PRESETS.healthcare.defaults })
 
   const selectedIndustry = INDUSTRY_PRESETS[industry]
 
   useEffect(() => {
-    const defaults = INDUSTRY_PRESETS[industry].defaults
-    setMonthlyLeads(defaults.monthlyLeads)
-    setAvgRevenue(defaults.avgRevenue)
-    setHourlyCost(defaults.hourlyCost)
-    setConversionRate(defaults.conversionRate)
-    setAutomationRate(defaults.automationRate)
-    setIncludeFollowUps(defaults.includeFollowUps)
+    setValues({ ...INDUSTRY_PRESETS[industry].defaults })
   }, [industry])
 
+  const handleValueChange = (key: keyof CalculatorValues, rawValue: string) => {
+    const parsed = Number(rawValue)
+    const cleaned = percentFields.includes(key) ? clampPercent(parsed) : clampNonNegative(parsed)
+
+    setValues((prev) => ({
+      ...prev,
+      [key]: cleaned,
+    }))
+  }
+
   const calculations = useMemo(() => {
-    const guarded = {
-      monthlyLeads,
-      avgRevenue,
-      hourlyCost,
-      conversionRate,
-      automationRate,
+    const inputs: Inputs = {
+      C: values.calls,
+      qBH: values.after_hours_share ? 1 - values.after_hours_share / 100 : 0.8,
+      AR0_BH: (100 - values.missed) / 100,
+      AR0_AH: Math.max(0, (100 - values.missed - 10) / 100),
+      AR1_BH: Math.min(1, (100 - values.missed + values.after_hours_uplift) / 100),
+      AR1_AH: Math.min(1, (100 - values.missed + values.after_hours_uplift + 10) / 100),
+      BR0: Math.max(0.01, values.ai_conv / 100 - 0.1),
+      BR1: values.ai_conv / 100,
+      NS0: values.no_show_base / 100,
+      NS1: values.no_show_new / 100,
+      R: values.ticket,
+      VC: values.vc,
+      K: values.capacity,
+      W: values.wage,
+      M: values.min_per_answer,
+      S: values.min_per_booking,
+      PAI: values.pct_ai_handled / 100,
+      ASbase: values.answering_cost,
+      ASrep: values.answering_replace / 100,
+      AIsub: selectedIndustry.subscription,
+      mAI: values.ai_mins_per_call,
+      pMin: values.ai_cost_per_min,
+      SMSpp: values.sms_cost_per,
+      SMSn: values.sms_per_booking,
     }
 
-    ;["conversionRate", "automationRate"].forEach((key) => {
-      guarded[key as "conversionRate" | "automationRate"] = clamp(
-        Number(guarded[key as keyof typeof guarded] ?? 0),
-        0,
-        100,
-      )
-    })
+    const safeInputs = sanitize(inputs)
+    const res = calcCore(safeInputs)
 
-    ;["monthlyLeads", "avgRevenue", "hourlyCost"].forEach((key) => {
-      guarded[key as "monthlyLeads" | "avgRevenue" | "hourlyCost"] = clamp(
-        Number(guarded[key as keyof typeof guarded] ?? 0),
-        0,
-      )
-    })
-
-    const automationFraction = guarded.automationRate / 100
-    const baselineConversion = guarded.conversionRate / 100
-    const followUpLift = includeFollowUps ? selectedIndustry.metrics.followUpLift : 0
-    const effectiveConversionRate = baselineConversion + automationFraction * followUpLift
-    const baselineConverted = guarded.monthlyLeads * baselineConversion
-    const projectedConverted = guarded.monthlyLeads * effectiveConversionRate
-    const incrementalConversions = Math.max(projectedConverted - baselineConverted, 0)
-
-    const incrementalRevenue = incrementalConversions * guarded.avgRevenue
-    const hoursSaved =
-      ((guarded.monthlyLeads * selectedIndustry.metrics.minutesPerInteraction) / 60) * automationFraction
-    const laborSavings = hoursSaved * guarded.hourlyCost
-    const grossMonthly = incrementalRevenue + laborSavings
-    const subscription = selectedIndustry.metrics.subscription
-    const grossMonthlyClamped = Math.max(0, grossMonthly)
-    const netMonthly = grossMonthlyClamped - subscription
-    const grossAnnual = grossMonthlyClamped * 12
-    const netAnnual = netMonthly * 12
-    const roiGross = subscription > 0 ? grossMonthlyClamped / subscription : null
+    const grossMonthly = res.dGP + res.laborSaved + res.answerSvcSaved + res.AIcost
+    const subscription = selectedIndustry.subscription
+    const netMonthly = res.net
+    const roiGross = subscription > 0 ? grossMonthly / subscription : null
     const roiNet = subscription > 0 ? netMonthly / subscription : null
-    const paybackDays = netMonthly > 0 ? Math.ceil((subscription / netMonthly) * 30) : null
-
-    const baselineLaborCost =
-      (guarded.monthlyLeads * selectedIndustry.metrics.minutesPerInteraction * guarded.hourlyCost) / 60
+    const paybackDays = res.paybackDays
 
     return {
-      automationFraction,
-      effectiveConversionRate,
-      incrementalRevenue,
-      hoursSaved,
-      laborSavings,
-      grossMonthly: grossMonthlyClamped,
+      grossMonthly,
       netMonthly,
-      grossAnnual,
-      netAnnual,
+      netAnnual: netMonthly * 12,
+      subscription,
       roiGross,
       roiNet,
       paybackDays,
-      baselineLaborCost,
-      baselineConverted,
-      projectedConverted,
-      subscription,
+      res,
     }
-  }, [
-    automationRate,
-    avgRevenue,
-    hourlyCost,
-    includeFollowUps,
-    monthlyLeads,
-    conversionRate,
-    selectedIndustry.metrics.followUpLift,
-    selectedIndustry.metrics.minutesPerInteraction,
-    selectedIndustry.metrics.subscription,
-  ])
+  }, [selectedIndustry.subscription, values])
 
-  const handleReset = () => {
-    const defaults = selectedIndustry.defaults
-    setMonthlyLeads(defaults.monthlyLeads)
-    setAvgRevenue(defaults.avgRevenue)
-    setHourlyCost(defaults.hourlyCost)
-    setConversionRate(defaults.conversionRate)
-    setAutomationRate(defaults.automationRate)
-    setIncludeFollowUps(defaults.includeFollowUps)
+  const renderField = (config: FieldConfig) => {
+    const isPercent = percentFields.includes(config.key)
+    const step = config.step ?? (isPercent ? 1 : 1)
+
+    return (
+      <div key={config.key as string} className="space-y-2">
+        <Label htmlFor={config.key as string}>{config.label}</Label>
+        <Input
+          id={config.key as string}
+          type="number"
+          min={0}
+          max={isPercent ? 100 : undefined}
+          step={step}
+          value={values[config.key]}
+          onChange={(event) => handleValueChange(config.key, event.target.value)}
+        />
+        {config.description ? <p className="text-xs text-muted-foreground">{config.description}</p> : null}
+      </div>
+    )
   }
 
   return (
     <Card className="mx-auto max-w-6xl border-border/60 bg-background/70 shadow-xl backdrop-blur">
       <CardHeader className="gap-6 md:flex md:items-start md:justify-between">
         <div className="space-y-3">
-          <CardTitle className="text-3xl font-semibold text-foreground">
-            Project Your ROI with Avella AI
-          </CardTitle>
+          <CardTitle className="text-3xl font-semibold text-foreground">Project Your ROI with Avella AI</CardTitle>
           <CardDescription className="max-w-2xl text-base leading-relaxed">
             Select the industry that matches your business, tune the assumptions, and instantly see how Avella unlocks new revenue
             while shrinking labor spend. All numbers are editable so you can mirror your exact operation.
@@ -328,92 +494,30 @@ const ROIIndustryCalculator = () => {
         <div className="grid gap-8 lg:grid-cols-[1.35fr_minmax(0,0.75fr)]">
           <div className="space-y-6">
             <div className="grid gap-5 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="monthlyLeads">Monthly inbound requests</Label>
-                <Input
-                  id="monthlyLeads"
-                  type="number"
-                  min={0}
-                  value={monthlyLeads}
-                  onChange={(event) => setMonthlyLeads(Math.max(Number(event.target.value) || 0, 0))}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Calls, texts, chats, or form fills you want Avella to capture every month.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="avgRevenue">Average revenue per conversion ($)</Label>
-                <Input
-                  id="avgRevenue"
-                  type="number"
-                  min={0}
-                  value={avgRevenue}
-                  onChange={(event) => setAvgRevenue(Math.max(Number(event.target.value) || 0, 0))}
-                />
-                <p className="text-xs text-muted-foreground">Ticket size, visit value, or contract worth for each won opportunity.</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="hourlyCost">Hourly cost of live agent ($)</Label>
-                <Input
-                  id="hourlyCost"
-                  type="number"
-                  min={0}
-                  value={hourlyCost}
-                  onChange={(event) => setHourlyCost(Math.max(Number(event.target.value) || 0, 0))}
-                />
-                <p className="text-xs text-muted-foreground">Fully-loaded wages for the team that normally handles the workload.</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="conversionRate">Current conversion rate (%)</Label>
-                <Input
-                  id="conversionRate"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={conversionRate}
-                  onChange={(event) => setConversionRate(Math.min(Math.max(Number(event.target.value) || 0, 0), 100))}
-                />
-                <p className="text-xs text-muted-foreground">Share of inquiries that become jobs, bookings, or leases today.</p>
-              </div>
+              {demandFields.map(renderField)}
             </div>
 
-            <div className="space-y-4 rounded-lg border border-border/60 bg-muted/20 p-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Automation coverage</p>
-                  <p className="text-xs text-muted-foreground">
-                    The percentage of interactions Avella handles end-to-end.
-                  </p>
-                </div>
-                <div className="text-sm font-semibold text-primary">{automationRate}%</div>
-              </div>
-              <Slider
-                value={[automationRate]}
-                min={0}
-                max={100}
-                step={1}
-                onValueChange={(value) => setAutomationRate(value[0] ?? 0)}
-              />
-              <div className="flex flex-col gap-3 rounded-md border border-dashed border-border/60 bg-background/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Enable automated follow-ups</p>
-                  <p className="text-xs text-muted-foreground">
-                    Keeps texting or emailing prospects until they confirm, lifting conversions by
-                    {" "}
-                    {percentFormatter.format(selectedIndustry.metrics.followUpLift)} when active.
-                  </p>
-                </div>
-                <Switch checked={includeFollowUps} onCheckedChange={setIncludeFollowUps} />
-              </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              {unitFields.map(renderField)}
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              {laborFields.map((field) =>
+                renderField({
+                  ...field,
+                  step: field.step ?? (field.key === "pct_ai_handled" ? 1 : undefined),
+                }),
+              )}
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              {costFields.map(renderField)}
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Button type="button" variant="secondary" onClick={handleReset}>
+              <Button type="button" variant="secondary" onClick={() => setValues({ ...selectedIndustry.defaults })}>
                 Reset to industry defaults
               </Button>
-              <div className="text-xs text-muted-foreground">
-                Baseline labor cost: {currencyFormatter.format(calculations.baselineLaborCost)} / month
-              </div>
             </div>
           </div>
 
@@ -424,7 +528,7 @@ const ROIIndustryCalculator = () => {
                 <button
                   type="button"
                   className="text-xs font-medium text-muted-foreground underline decoration-dotted underline-offset-4"
-                  title="Estimates respond most to missed-call rate, conversion uplift, average ticket value, and the no-show delta you assume."
+                  title="Estimates respond most to missed-call rate, conversion uplift, average ticket value, and capacity assumptions."
                 >
                   What affects results?
                 </button>
@@ -440,7 +544,7 @@ const ROIIndustryCalculator = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="grid gap-4"
+                    className="space-y-4"
                   >
                     <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/10 p-4">
                       <div className="flex items-center justify-between">
@@ -455,8 +559,7 @@ const ROIIndustryCalculator = () => {
                         <span className="text-sm font-medium">Net impact / month</span>
                         <span
                           className={
-                            "text-lg font-semibold " +
-                            (calculations.netMonthly >= 0 ? "text-emerald-600" : "text-rose-600")
+                            "text-lg font-semibold " + (calculations.netMonthly >= 0 ? "text-emerald-600" : "text-rose-600")
                           }
                         >
                           {money(Math.round(calculations.netMonthly))}
@@ -466,11 +569,10 @@ const ROIIndustryCalculator = () => {
                         <span className="text-sm text-muted-foreground">Net impact / year</span>
                         <span
                           className={
-                            "text-lg font-semibold " +
-                            (calculations.netMonthly >= 0 ? "text-emerald-600" : "text-rose-600")
+                            "text-lg font-semibold " + (calculations.netMonthly >= 0 ? "text-emerald-600" : "text-rose-600")
                           }
                         >
-                          {money(Math.round(calculations.netMonthly * 12))}
+                          {money(Math.round(calculations.netAnnual))}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -492,35 +594,35 @@ const ROIIndustryCalculator = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Payback (est.)</span>
                         <span className="text-lg font-semibold">
-                          {calculations.paybackDays
-                            ? `${calculations.paybackDays} days`
-                            : "— (no payback at current inputs)"}
+                          {calculations.paybackDays ? `${calculations.paybackDays} days` : "— (no payback at current inputs)"}
                         </span>
                       </div>
                       {calculations.netMonthly <= 0 && (
                         <div className="text-xs text-rose-600">
-                          Net negative at current inputs—try adjusting missed calls or ticket size.
+                          Net negative at current inputs—try adjusting missed calls, ticket size, or conversion lift.
                         </div>
                       )}
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {money(Math.round(calculations.laborSavings))} in labor savings +{" "}
-                        {money(Math.round(calculations.incrementalRevenue))} in new revenue.
-                      </p>
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="rounded-lg border border-border/60 bg-background p-4">
-                        <p className={metricLabelClass}>Hours saved</p>
-                        <p className={metricValueClass}>{calculations.hoursSaved.toFixed(1)}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">Team hours reclaimed from manual coordination.</p>
-                      </div>
-                      <div className="rounded-lg border border-border/60 bg-background p-4">
-                        <p className={metricLabelClass}>Projected conversions</p>
-                        <p className={metricValueClass}>{Math.round(calculations.projectedConverted)}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Up from {Math.round(calculations.baselineConverted)} today (
-                          {percentFormatter.format(calculations.effectiveConversionRate)} conversion).
-                        </p>
-                      </div>
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-foreground">Components (directional)</h4>
+                      <ul className="space-y-1 text-sm text-muted-foreground">
+                        <li className="flex items-center justify-between">
+                          <span>Gross profit delta</span>
+                          <span>{money(Math.round(calculations.res.dGP))}</span>
+                        </li>
+                        <li className="flex items-center justify-between">
+                          <span>Labor savings</span>
+                          <span>{money(Math.round(calculations.res.laborSaved))}</span>
+                        </li>
+                        <li className="flex items-center justify-between">
+                          <span>Answering service savings</span>
+                          <span>{money(Math.round(calculations.res.answerSvcSaved))}</span>
+                        </li>
+                        <li className="flex items-center justify-between">
+                          <span>AI platform cost</span>
+                          <span>-{money(Math.round(calculations.res.AIcost))}</span>
+                        </li>
+                      </ul>
                     </div>
                   </motion.div>
                 </TabsContent>
@@ -535,7 +637,7 @@ const ROIIndustryCalculator = () => {
                     <div className="rounded-lg border border-primary/40 bg-primary/10 p-4">
                       <p className={metricLabelClass}>Gross impact / year</p>
                       <p className={`${metricValueClass} text-primary`}>
-                        {money(Math.round(calculations.grossAnnual))}
+                        {money(Math.round(calculations.grossMonthly * 12))}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         Net impact estimate: {money(Math.round(calculations.netAnnual))} after subscription fees.
@@ -546,7 +648,7 @@ const ROIIndustryCalculator = () => {
                         <p className={metricLabelClass}>ROI multiple</p>
                         <p className={metricValueClass}>
                           {calculations.roiGross !== null && isFinite(calculations.roiGross)
-                            ? calculations.roiGross.toFixed(1) + "x"
+                            ? `${calculations.roiGross.toFixed(1)}x`
                             : "—"}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
@@ -556,21 +658,21 @@ const ROIIndustryCalculator = () => {
                       <div className="rounded-lg border border-border/60 bg-background p-4">
                         <p className={metricLabelClass}>Payback period</p>
                         <p className={metricValueClass}>
-                          {calculations.paybackDays
-                            ? `${calculations.paybackDays} days`
-                            : "— (no payback at current inputs)"}
+                          {calculations.paybackDays ? `${calculations.paybackDays} days` : "— (no payback at current inputs)"}
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground">How quickly savings and revenue cover one month of Avella.</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          How quickly savings and revenue cover one month of Avella.
+                        </p>
                       </div>
                     </div>
                   </motion.div>
                 </TabsContent>
               </Tabs>
               <p className="text-xs text-muted-foreground pt-3">
-                <strong>Disclaimer:</strong> This calculator provides directional estimates only and is for informational
-                purposes. It does not guarantee outcomes, savings, or earnings. Actual results depend on your operations,
-                pricing, demand, staffing, compliance, and third-party systems. Nothing herein is financial, legal, or medical
-                advice. By using this tool, you agree that Avella AI makes no warranties or guarantees of performance.
+                <strong>Disclaimer:</strong> This calculator provides directional estimates only and is for informational purposes.
+                It does not guarantee outcomes, savings, or earnings. Actual results depend on your operations, pricing, demand,
+                staffing, compliance, and third-party systems. Nothing herein is financial, legal, or medical advice. By using this
+                tool, you agree that Avella AI makes no warranties or guarantees of performance.
               </p>
             </div>
           </div>
@@ -596,3 +698,4 @@ const ROIIndustryCalculator = () => {
 }
 
 export default ROIIndustryCalculator
+

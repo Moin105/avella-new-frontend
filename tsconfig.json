@@ -20,6 +20,7 @@
     ],
     "paths": {
       "@/*": ["./*"],
+      "@/lib/*": ["./src/lib/*", "./lib/*"],
       "framer-motion": ["./lib/framer-motion"]
     }
   },
