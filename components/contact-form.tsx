@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { apiClient } from "@/app/lib/api"
+import { BUSINESS_TYPE_OPTIONS } from "@/lib/business-types"
 
 export function ContactForm() {
   const [formData, setFormData] = useState({
@@ -116,14 +117,11 @@ export function ContactForm() {
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="medical">Doctors' Office / Medical Clinic</SelectItem>
-              <SelectItem value="restaurant">Restaurant</SelectItem>
-              <SelectItem value="barbers-salons">Barbers & Salons</SelectItem>
-              <SelectItem value="residential">Residential Building</SelectItem>
-              <SelectItem value="service-trade">Service Trade Business</SelectItem>
-              <SelectItem value="reception-team">Reception Team</SelectItem>
-              <SelectItem value="dry-cleaner">Dry Cleaner</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              {BUSINESS_TYPE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
