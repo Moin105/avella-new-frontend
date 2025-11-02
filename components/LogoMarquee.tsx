@@ -11,8 +11,6 @@ const ITEMS: Item[] = [
   { name: "iCloud (CalDAV)" },
 
   // Telephony & Voice
-  { name: "Twilio" },
-  { name: "Retell.ai" },
   { name: "Telnyx" },
   { name: "Vonage" },
   { name: "Plivo" },

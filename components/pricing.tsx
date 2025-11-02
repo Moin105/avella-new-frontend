@@ -22,7 +22,7 @@ export function Pricing() {
               {[
                 "24/7 Voice AI receptionist",
                 "Unlimited appointment bookings",
-                "Complete CRM system",
+                "Unified messaging inbox",
                 "Business analytics dashboard",
                 "SMS & email reminders",
                 "Calendar integrations",
@@ -48,7 +48,6 @@ export function Pricing() {
             <Button size="lg" className="w-full">
               Contact Us for Pricing
             </Button>
-            <p className="text-sm text-muted-foreground mt-4">Typical plans start at $199/month</p>
           </div>
         </div>
 

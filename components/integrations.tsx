@@ -52,24 +52,10 @@ export function Integrations() {
 
       <div className="max-w-3xl mx-auto p-8 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20">
         <h3 className="text-2xl font-bold text-foreground mb-4 text-center">Easy Migration</h3>
-        <p className="text-muted-foreground text-center mb-6 leading-relaxed">
+        <p className="text-muted-foreground text-center leading-relaxed">
           Worried about switching systems? Our team handles the entire migration process for you. We'll import your
-          existing client data, set up all integrations, and train your team—all within 48 hours.
+          existing client data, set up all integrations, and train your team while your business keeps running.
         </p>
-        <div className="grid sm:grid-cols-3 gap-4 text-center">
-          <div>
-            <div className="text-3xl font-bold text-primary mb-1">48hrs</div>
-            <div className="text-sm text-muted-foreground">Setup time</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-primary mb-1">Zero</div>
-            <div className="text-sm text-muted-foreground">Downtime</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-primary mb-1">100%</div>
-            <div className="text-sm text-muted-foreground">Data migrated</div>
-          </div>
-        </div>
       </div>
     </div>
   )
