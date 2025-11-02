@@ -10,9 +10,9 @@ export function Features() {
     },
     {
       icon: Users,
-      title: "Complete CRM",
+      title: "Client Communication Hub",
       description:
-        "Track client history, preferences, and visit patterns. Build stronger relationships with automated follow-ups.",
+        "Keep every conversation in one place with SMS and email templates so your team never misses a follow-up.",
     },
     {
       icon: BarChart3,
