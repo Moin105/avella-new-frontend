@@ -2,7 +2,10 @@ import { Header } from "@/components/header"
 import { Hero } from "@/components/hero"
 import LogoMarquee from "@/components/LogoMarquee"
 import ROIIndustryCalculator from "@/components/ROIIndustryCalculator"
-import { TabbedSections } from "@/components/tabbed-sections"
+import { HowItWorks } from "@/components/how-it-works"
+import { Features } from "@/components/features"
+import { Integrations } from "@/components/integrations"
+import { Pricing } from "@/components/pricing"
 import { UseCases } from "@/components/use-cases"
 import { CTA } from "@/components/cta"
 import { Footer } from "@/components/footer"
@@ -13,7 +16,10 @@ export default function Home() {
       <Header />
       <Hero />
       <LogoMarquee />
-      <TabbedSections />
+      <HowItWorks />
+      <Features />
+      <Integrations />
+      <Pricing />
       <UseCases />
       <section id="roi-calculator" className="py-16 md:py-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-10 text-center">
