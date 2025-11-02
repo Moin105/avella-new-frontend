@@ -8,16 +8,16 @@ import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Textarea } from '../../components/ui/textarea';
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Phone, 
-  Mail, 
-  MapPin, 
+import {
+  Users,
+  Search,
+  Filter,
+  Eye,
+  Edit,
+  Trash2,
+  Phone,
+  Mail,
+  MapPin,
   Calendar,
   Clock,
   User,
@@ -29,14 +29,17 @@ import {
   TrendingUp,
   BarChart3,
   Plus,
-  MoreHorizontal
+  MoreHorizontal,
+  Briefcase
 } from 'lucide-react';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { getBusinessTypeLabel } from '@/lib/business-types';
 
 interface Lead {
   id: string;
@@ -81,6 +84,22 @@ export default function LeadsPage() {
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  const formatDateTime = (value?: string | null) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleString();
+  };
+
+  const formatSource = (value?: string | null) => {
+    if (!value) return 'Unknown source';
+    return value
+      .split(/[_-]+/)
+      .filter(Boolean)
+      .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' ');
+  };
 
   useEffect(() => {
     fetchLeads();
@@ -226,6 +245,7 @@ export default function LeadsPage() {
       lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.business_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.phone?.includes(searchTerm);
     
     const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
@@ -383,6 +403,12 @@ export default function LeadsPage() {
                         {lead.business_name}
                       </p>
                     )}
+                    {lead.business_type && (
+                      <p className="text-sm text-muted-foreground flex items-center">
+                        <Briefcase className="w-4 h-4 mr-1" />
+                        {getBusinessTypeLabel(lead.business_type)}
+                      </p>
+                    )}
                     {lead.phone && (
                       <p className="text-sm text-muted-foreground flex items-center">
                         <Phone className="w-4 h-4 mr-1" />
@@ -486,6 +512,132 @@ export default function LeadsPage() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog
+        open={showLeadModal}
+        onOpenChange={(open) => {
+          setShowLeadModal(open);
+          if (!open) {
+            setSelectedLead(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{selectedLead?.name ?? 'Lead details'}</DialogTitle>
+            <DialogDescription>
+              {selectedLead ? `Lead submitted via ${formatSource(selectedLead.source)}` : 'Review lead submission details.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedLead && (
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className={getStatusColor(selectedLead.status)}>
+                  {selectedLead.status.charAt(0).toUpperCase() + selectedLead.status.slice(1)}
+                </Badge>
+                <Badge className={getPriorityColor(selectedLead.priority)}>
+                  {selectedLead.priority.charAt(0).toUpperCase() + selectedLead.priority.slice(1)}
+                </Badge>
+                {selectedLead.assigned_to && (
+                  <Badge variant="outline">Assigned to {selectedLead.assigned_to}</Badge>
+                )}
+              </div>
+
+              <section className="space-y-3">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase">Contact</h4>
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Email</dt>
+                    <dd className="text-right font-medium break-all">{selectedLead.email}</dd>
+                  </div>
+                  {selectedLead.phone && (
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Phone</dt>
+                      <dd className="text-right font-medium">{selectedLead.phone}</dd>
+                    </div>
+                  )}
+                  {selectedLead.business_name && (
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Business Name</dt>
+                      <dd className="text-right font-medium">{selectedLead.business_name}</dd>
+                    </div>
+                  )}
+                  {selectedLead.business_type && (
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Business Type</dt>
+                      <dd className="text-right font-medium">{getBusinessTypeLabel(selectedLead.business_type)}</dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+
+              {(selectedLead.message || selectedLead.notes) && (
+                <section className="space-y-3">
+                  {selectedLead.message && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-muted-foreground uppercase">Message</h4>
+                      <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground whitespace-pre-line">
+                        {selectedLead.message}
+                      </p>
+                    </div>
+                  )}
+                  {selectedLead.notes && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-muted-foreground uppercase">Internal Notes</h4>
+                      <p className="rounded-md bg-muted/60 p-3 text-sm text-muted-foreground whitespace-pre-line">
+                        {selectedLead.notes}
+                      </p>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              <section className="space-y-3">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase">Timeline</h4>
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Submitted</dt>
+                    <dd className="text-right font-medium">
+                      {formatDateTime(selectedLead.created_at) ?? '—'}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Last Updated</dt>
+                    <dd className="text-right font-medium">
+                      {formatDateTime(selectedLead.updated_at) ?? '—'}
+                    </dd>
+                  </div>
+                  {selectedLead.last_contacted && (
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Last Contacted</dt>
+                      <dd className="text-right font-medium">
+                        {formatDateTime(selectedLead.last_contacted) ?? '—'}
+                      </dd>
+                    </div>
+                  )}
+                  {selectedLead.follow_up_date && (
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Follow Up</dt>
+                      <dd className="text-right font-medium">
+                        {formatDateTime(selectedLead.follow_up_date) ?? '—'}
+                      </dd>
+                    </div>
+                  )}
+                  {selectedLead.conversion_date && (
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-muted-foreground">Conversion Date</dt>
+                      <dd className="text-right font-medium">
+                        {formatDateTime(selectedLead.conversion_date) ?? '—'}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
