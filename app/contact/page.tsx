@@ -49,7 +49,7 @@ export default function ContactPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="businessName">Business Name</Label>
-                  <Input id="businessName" placeholder="Your Barbershop" />
+                  <Input id="businessName" placeholder="Business name" />
                 </div>
 
                 <div className="space-y-2">

@@ -19,8 +19,7 @@ const money = (n: number) =>
 const clampPercent = (value: number) => Math.min(Math.max(isFinite(value) ? value : 0, 0), 100)
 const clampNonNegative = (value: number) => Math.max(isFinite(value) ? value : 0, 0)
 
-const PLATFORM_SUBSCRIPTION = 300
-const PLATFORM_INTEGRATION_FEE = 1000
+const PLATFORM_SUBSCRIPTION = 0
 
 type CalculatorValues = {
   calls: number
@@ -324,15 +323,13 @@ const ROIIndustryCalculator = () => {
     const netMonthly = res.net
     const roiGross = monthlyPlatformCost > 0 ? grossMonthly / monthlyPlatformCost : null
     const roiNet = monthlyPlatformCost > 0 ? netMonthly / monthlyPlatformCost : null
-    const paybackDays = netMonthly > 0 ? Math.ceil((monthlyPlatformCost + PLATFORM_INTEGRATION_FEE) / (netMonthly / 30)) : null
+    const paybackDays = netMonthly > 0 ? Math.ceil(monthlyPlatformCost / (netMonthly / 30)) : null
 
     return {
       grossMonthly,
       netMonthly,
-      netAnnual: netMonthly * 12 - PLATFORM_INTEGRATION_FEE,
+      netAnnual: netMonthly * 12,
       monthlyPlatformCost,
-      integrationFee: PLATFORM_INTEGRATION_FEE,
-      firstMonthInvestment: monthlyPlatformCost + PLATFORM_INTEGRATION_FEE,
       roiGross,
       roiNet,
       paybackDays,
@@ -447,7 +444,7 @@ const ROIIndustryCalculator = () => {
                         <span className="text-lg font-semibold">{money(Math.round(calculations.grossMonthly))}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Platform spend / month</span>
+                        <span className="text-sm text-muted-foreground">Usage-based automation costs / month</span>
                         <span className="text-lg font-semibold">-{money(Math.round(calculations.monthlyPlatformCost))}</span>
                       </div>
                       <div className="flex items-center justify-between border-t pt-2">
@@ -461,7 +458,7 @@ const ROIIndustryCalculator = () => {
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Net impact / year (after integration)</span>
+                        <span className="text-sm text-muted-foreground">Net impact / year</span>
                         <span
                           className={
                             "text-lg font-semibold " + (calculations.netAnnual >= 0 ? "text-emerald-600" : "text-rose-600")
@@ -469,10 +466,6 @@ const ROIIndustryCalculator = () => {
                         >
                           {money(Math.round(calculations.netAnnual))}
                         </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">One-time integration (month 1)</span>
-                        <span className="text-lg font-semibold">-{money(Math.round(calculations.integrationFee))}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">ROI (gross)</span>
@@ -518,13 +511,10 @@ const ROIIndustryCalculator = () => {
                           <span>{money(Math.round(calculations.res.answerSvcSaved))}</span>
                         </li>
                         <li className="flex items-center justify-between">
-                          <span>Platform spend (monthly)</span>
+                          <span>Usage-based costs (monthly)</span>
                           <span>-{money(Math.round(calculations.res.AIcost))}</span>
                         </li>
                       </ul>
-                      <p className="text-xs text-muted-foreground">
-                        First-month platform investment (including integration): {money(Math.round(calculations.firstMonthInvestment))}.
-                      </p>
                     </div>
                   </motion.div>
                 </TabsContent>
@@ -542,8 +532,7 @@ const ROIIndustryCalculator = () => {
                         {money(Math.round(calculations.grossMonthly * 12))}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        Net impact estimate (year 1): {money(Math.round(calculations.netAnnual))} after monthly platform spend and
-                        the one-time integration fee.
+                        Net impact estimate (year 1): {money(Math.round(calculations.netAnnual))} after estimated usage-based costs.
                       </p>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -555,7 +544,7 @@ const ROIIndustryCalculator = () => {
                             : "—"}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Compared to about {money(Math.round(calculations.monthlyPlatformCost))} in monthly platform spend.
+                          Compared to about {money(Math.round(calculations.monthlyPlatformCost))} in estimated usage-based costs.
                         </p>
                       </div>
                       <div className="rounded-lg border border-border/60 bg-background p-4">
@@ -564,7 +553,7 @@ const ROIIndustryCalculator = () => {
                           {calculations.paybackDays ? `${calculations.paybackDays} days` : "— (no payback at current inputs)"}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          How quickly savings and revenue cover the integration fee plus the first month of Avella.
+                          How quickly savings and revenue cover estimated usage-based costs.
                         </p>
                       </div>
                     </div>

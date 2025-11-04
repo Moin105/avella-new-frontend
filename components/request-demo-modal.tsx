@@ -76,7 +76,7 @@ export function RequestDemoModal({ open, onOpenChange }: RequestDemoModalProps) 
             <Label htmlFor="businessName">Business Name</Label>
             <Input
               id="businessName"
-              placeholder="Your Barbershop or Salon"
+              placeholder="Business name"
               value={formData.businessName}
               onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
               required
