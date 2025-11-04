@@ -17,6 +17,22 @@ export default function Home() {
       <Hero />
       <LogoMarquee />
       <HowItWorks />
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
+        <div className="container mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground text-balance">
+            Always open. Always handled. See it below.
+          </h2>
+          <div className="mt-10 mx-auto max-w-4xl aspect-video rounded-2xl overflow-hidden shadow-xl border border-border">
+            <iframe
+              className="w-full h-full"
+              src="https://www.youtube.com/embed/JILGvASy8KA"
+              title="Avella AI Overview"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      </section>
       <Features />
       <Integrations />
       <Pricing />
