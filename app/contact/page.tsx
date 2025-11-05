@@ -1,3 +1,6 @@
+'use client'
+
+import React, { useState } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Input } from "@/components/ui/input"
@@ -5,8 +8,98 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { apiClient } from "../lib/api"
+
+type FormState = {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  businessName: string
+  subject: string
+  message: string
+}
+
+const defaultFormState: FormState = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  businessName: "",
+  subject: "",
+  message: "",
+}
 
 export default function ContactPage() {
+  const [formState, setFormState] = useState<FormState>(defaultFormState)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submissionStatus, setSubmissionStatus] = useState<"idle" | "success" | "error">("idle")
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
+
+  const handleInputChange = (field: keyof FormState) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { value } = event.target
+    setFormState(prev => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
+
+  const handleSubjectChange = (value: string) => {
+    setFormState(prev => ({
+      ...prev,
+      subject: value,
+    }))
+  }
+
+  const resetForm = () => {
+    setFormState(defaultFormState)
+  }
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsSubmitting(true)
+    setSubmissionStatus("idle")
+    setSubmissionError(null)
+
+    if (!formState.subject) {
+      setSubmissionStatus("error")
+      setSubmissionError("Please select a subject before sending your message.")
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
+      const response = await apiClient.post("/contact", {
+        first_name: formState.firstName,
+        last_name: formState.lastName,
+        email: formState.email,
+        phone: formState.phone,
+        business_name: formState.businessName,
+        subject: formState.subject,
+        message: formState.message,
+        source: "contact_page",
+      })
+
+      if (response.success) {
+        setSubmissionStatus("success")
+        resetForm()
+        if (typeof window !== "undefined") {
+          localStorage.setItem("admin_inquiries_last_updated", new Date().toISOString())
+        }
+      } else {
+        setSubmissionStatus("error")
+        setSubmissionError(response.error || "We were unable to send your message. Please try again.")
+      }
+    } catch (error) {
+      console.error("Failed to submit contact form:", error)
+      setSubmissionStatus("error")
+      setSubmissionError("We were unable to send your message. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <main className="min-h-screen">
       <Header />
@@ -25,57 +118,117 @@ export default function ContactPage() {
             {/* Contact Form */}
             <div className="bg-card border border-border rounded-lg p-8">
               <h2 className="text-2xl font-bold text-foreground mb-6">Send us a message</h2>
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name *</Label>
-                    <Input id="firstName" placeholder="John" required />
+                    <Input
+                      id="firstName"
+                      placeholder="John"
+                      required
+                      value={formState.firstName}
+                      onChange={handleInputChange("firstName")}
+                      autoComplete="given-name"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name *</Label>
-                    <Input id="lastName" placeholder="Doe" required />
+                    <Input
+                      id="lastName"
+                      placeholder="Doe"
+                      required
+                      value={formState.lastName}
+                      onChange={handleInputChange("lastName")}
+                      autoComplete="family-name"
+                    />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email *</Label>
-                  <Input id="email" type="email" placeholder="john@example.com" required />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="john@example.com"
+                    required
+                    value={formState.email}
+                    onChange={handleInputChange("email")}
+                    autoComplete="email"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" placeholder="(555) 123-4567" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(555) 123-4567"
+                    value={formState.phone}
+                    onChange={handleInputChange("phone")}
+                    autoComplete="tel"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="businessName">Business Name</Label>
-                  <Input id="businessName" placeholder="Business name" />
+                  <Input
+                    id="businessName"
+                    placeholder="Business name"
+                    value={formState.businessName}
+                    onChange={handleInputChange("businessName")}
+                    autoComplete="organization"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject *</Label>
-                  <Select>
+                  <Select value={formState.subject} onValueChange={handleSubjectChange}>
                     <SelectTrigger id="subject">
                       <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="demo">Book Demo</SelectItem>
-                      <SelectItem value="pricing">Pricing Inquiry</SelectItem>
-                      <SelectItem value="support">Technical Support</SelectItem>
-                      <SelectItem value="partnership">Partnership Opportunity</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="Book Demo">Book Demo</SelectItem>
+                      <SelectItem value="Pricing Inquiry">Pricing Inquiry</SelectItem>
+                      <SelectItem value="Technical Support">Technical Support</SelectItem>
+                      <SelectItem value="Partnership Opportunity">Partnership Opportunity</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="message">Message *</Label>
-                  <Textarea id="message" placeholder="Tell us how we can help you..." rows={6} required />
+                  <Textarea
+                    id="message"
+                    placeholder="Tell us how we can help you..."
+                    rows={6}
+                    required
+                    value={formState.message}
+                    onChange={handleInputChange("message")}
+                  />
                 </div>
 
-                <Button type="submit" className="w-full" size="lg">
-                  Send Message
+                <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                  {isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
+
+                {submissionStatus === "success" && (
+                  <Alert className="border-green-500/30 bg-green-500/10 text-green-700">
+                    <AlertTitle>Message sent</AlertTitle>
+                    <AlertDescription>
+                      Thank you for contacting us! Our team will reach out shortly.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {submissionStatus === "error" && (
+                  <Alert variant="destructive">
+                    <AlertTitle>Something went wrong</AlertTitle>
+                    <AlertDescription>
+                      {submissionError || "We couldn't deliver your message. Please try again later."}
+                    </AlertDescription>
+                  </Alert>
+                )}
               </form>
             </div>
 

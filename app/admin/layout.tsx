@@ -1,14 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
-import { Loader2, LogOut, User, Home, BarChart3, Zap, AlertTriangle, Settings, Users } from 'lucide-react';
+import { Loader2, LogOut, User, Home, BarChart3, Zap, AlertTriangle, Users, Inbox } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { apiClient } from '../lib/api';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
+}
+
+interface InquirySummary {
+  created_at?: string;
+  status?: string;
+  viewed_at?: string | null;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -16,9 +22,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const [newInquiryCount, setNewInquiryCount] = useState(0);
+
   const navigationItems = [
     { href: '/admin', label: 'Dashboard', icon: Home },
     { href: '/admin/leads', label: 'Leads', icon: Users },
+    { href: '/admin/inquires', label: 'Inquires', icon: Inbox },
     { href: '/admin/metrics', label: 'Metrics', icon: BarChart3 },
     { href: '/admin/integrations', label: 'Integrations', icon: Zap },
     { href: '/admin/error-center', label: 'Error Center', icon: AlertTriangle },
@@ -39,6 +48,88 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [isAuthenticated, loading, user, router]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    let isMounted = true;
+
+    const parseDate = (value?: string | null) => {
+      if (!value) return null;
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    };
+
+    const fetchInquiryCount = async () => {
+      try {
+        const response = await apiClient.get<InquirySummary[]>('/admin/inquiries');
+        if (!isMounted || !response.success || !Array.isArray(response.data)) {
+          return;
+        }
+
+        const inquiries = response.data;
+        const lastViewedRaw = window.localStorage.getItem('admin_inquiries_last_viewed');
+        const lastViewed = parseDate(lastViewedRaw);
+
+        const count = inquiries.reduce((total, inquiry) => {
+          const createdAt = parseDate(inquiry.created_at);
+          const viewedAt = parseDate(inquiry.viewed_at ?? null);
+          const status = (inquiry.status || '').toLowerCase();
+
+          if (!lastViewed) {
+            return status === 'new' && !viewedAt ? total + 1 : total;
+          }
+
+          if (createdAt && createdAt > lastViewed) {
+            return total + 1;
+          }
+
+          if (!viewedAt && status === 'new') {
+            return total + 1;
+          }
+
+          return total;
+        }, 0);
+
+        setNewInquiryCount(count);
+      } catch (error) {
+        console.error('Failed to refresh inquiry count:', error);
+      }
+    };
+
+    if (pathname.startsWith('/admin/inquires')) {
+      window.localStorage.setItem('admin_inquiries_last_viewed', new Date().toISOString());
+      setNewInquiryCount(0);
+    } else {
+      fetchInquiryCount();
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'admin_inquiries_last_viewed' || event.key === 'admin_inquiries_last_updated') {
+        if (pathname.startsWith('/admin/inquires')) {
+          setNewInquiryCount(0);
+        } else {
+          fetchInquiryCount();
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+
+    const interval = window.setInterval(() => {
+      if (!pathname.startsWith('/admin/inquires')) {
+        fetchInquiryCount();
+      }
+    }, 60000);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('storage', handleStorage);
+      window.clearInterval(interval);
+    };
+  }, [pathname]);
+
   if (loading) {
     return (
       <div className="h-screen bg-background flex">
@@ -56,14 +147,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   <a
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                       active
                         ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground hover:bg-accent hover:shadow-sm'
                     }`}
                   >
-                    <Icon className="h-4 w-4 mr-3 flex-shrink-0" />
-                    <span className="truncate">{item.label}</span>
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {item.href === '/admin/inquires' && newInquiryCount > 0 && (
+                      <span className="inline-flex min-w-[1.5rem] h-6 items-center justify-center rounded-full bg-red-500 px-2 text-xs font-semibold text-white">
+                        {newInquiryCount > 99 ? '99+' : newInquiryCount}
+                      </span>
+                    )}
                   </a>
                 );
               })}
@@ -127,14 +223,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <a
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                     active
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent hover:shadow-sm'
                   }`}
                 >
-                  <Icon className="h-4 w-4 mr-3 flex-shrink-0" />
-                  <span className="truncate">{item.label}</span>
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {item.href === '/admin/inquires' && newInquiryCount > 0 && (
+                    <span className="inline-flex min-w-[1.5rem] h-6 items-center justify-center rounded-full bg-red-500 px-2 text-xs font-semibold text-white">
+                      {newInquiryCount > 99 ? '99+' : newInquiryCount}
+                    </span>
+                  )}
                 </a>
               );
             })}

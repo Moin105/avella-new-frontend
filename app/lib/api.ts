@@ -27,6 +27,7 @@ class ApiClient {
   private baseURL: string;
   private mockMode: boolean;
   private token: string | null = null;
+  private mockInquiries: any[];
 
   constructor() {
     // Determine the correct API base URL based on environment
@@ -45,8 +46,56 @@ class ApiClient {
     
     this.baseURL = getApiUrl();
     
-    this.mockMode = process.env.NEXT_PUBLIC_MOCK === 'true' || 
+    this.mockMode = process.env.NEXT_PUBLIC_MOCK === 'true' ||
                    (typeof window !== 'undefined' && localStorage.getItem('mock_mode') === 'true');
+
+    this.mockInquiries = [
+      {
+        id: 'inq-1',
+        first_name: 'Emily',
+        last_name: 'Clark',
+        email: 'emily.clark@example.com',
+        phone: '(555) 321-9876',
+        business_name: 'Glow Beauty Lounge',
+        subject: 'Book Demo',
+        message: 'I would love to see how Avella AI can improve our front-desk efficiency and booking experience.',
+        status: 'new',
+        source: 'contact_form',
+        created_at: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+        updated_at: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+        viewed_at: null,
+      },
+      {
+        id: 'inq-2',
+        first_name: 'Marcus',
+        last_name: 'Reed',
+        email: 'marcus.reed@primecuts.com',
+        phone: '(555) 654-1122',
+        business_name: 'Prime Cuts Barbershop',
+        subject: 'Pricing Inquiry',
+        message: 'Curious about pricing tiers for multi-location shops and the onboarding timeline.',
+        status: 'responded',
+        source: 'contact_form',
+        created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+        updated_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+        viewed_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+      },
+      {
+        id: 'inq-3',
+        first_name: 'Priya',
+        last_name: 'Sharma',
+        email: 'priya@auroraspa.co',
+        phone: '(555) 876-4433',
+        business_name: 'Aurora Spa Co.',
+        subject: 'Partnership Opportunity',
+        message: 'We are interested in exploring a strategic partnership for our spa network.',
+        status: 'new',
+        source: 'contact_form',
+        created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+        updated_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+        viewed_at: null,
+      }
+    ];
     
     // Debug logging
     console.log('API Client initialized:', {
@@ -371,6 +420,72 @@ class ApiClient {
           role: 'barber',
         }
       } as T;
+    }
+
+    if (endpoint === '/contact' && method === 'POST') {
+      const timestamp = new Date().toISOString();
+      const newInquiry = {
+        id: `inq-${Math.random().toString(36).slice(2, 10)}`,
+        first_name: data?.first_name || '',
+        last_name: data?.last_name || '',
+        email: data?.email || '',
+        phone: data?.phone || '',
+        business_name: data?.business_name || '',
+        subject: data?.subject || 'General Inquiry',
+        message: data?.message || '',
+        status: 'new',
+        source: data?.source || 'contact_form',
+        created_at: timestamp,
+        updated_at: timestamp,
+        viewed_at: null,
+      };
+
+      this.mockInquiries = [newInquiry, ...this.mockInquiries];
+
+      return {
+        message: 'Contact form submitted successfully',
+        inquiry: newInquiry,
+      } as T;
+    }
+
+    if (endpoint.startsWith('/admin/inquiries')) {
+      if (method === 'GET') {
+        return this.mockInquiries as T;
+      }
+
+      if (method === 'POST' && endpoint.endsWith('/mark-read')) {
+        const viewedAt = new Date().toISOString();
+        this.mockInquiries = this.mockInquiries.map(inquiry =>
+          inquiry.viewed_at
+            ? inquiry
+            : { ...inquiry, viewed_at: viewedAt }
+        );
+
+        return { message: 'Inquiries marked as viewed' } as T;
+      }
+
+      if (method === 'PUT' && endpoint.includes('/status')) {
+        const parts = endpoint.split('/');
+        const inquiryId = parts[3];
+        const updatedAt = new Date().toISOString();
+        this.mockInquiries = this.mockInquiries.map(inquiry =>
+          inquiry.id === inquiryId
+            ? {
+                ...inquiry,
+                status: data?.status || inquiry.status,
+                updated_at: updatedAt,
+                viewed_at: inquiry.viewed_at || updatedAt,
+              }
+            : inquiry
+        );
+
+        const updatedInquiry = this.mockInquiries.find(inquiry => inquiry.id === inquiryId);
+
+        return {
+          message: 'Inquiry status updated',
+          inquiry: updatedInquiry,
+        } as T;
+      }
     }
 
     // Dashboard endpoints
