@@ -34,7 +34,7 @@ export function RequestDemoModal({ open, onOpenChange }: RequestDemoModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Request a Demo</DialogTitle>
+          <DialogTitle>Book Demo</DialogTitle>
           <DialogDescription>Fill out the form below and we'll get back to you within 24 hours.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -93,7 +93,7 @@ export function RequestDemoModal({ open, onOpenChange }: RequestDemoModalProps) 
             />
           </div>
           <Button type="submit" className="w-full">
-            Request Demo
+            Book Demo
           </Button>
         </form>
       </DialogContent>

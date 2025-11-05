@@ -79,10 +79,12 @@ export default function AboutPage() {
                 Join hundreds of barbershops and salons already using Avella AI to grow their business.
               </p>
               <a
-                href="/#contact"
+                href="https://calendly.com/avellabooking-info/30min"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                Request a Demo
+                Book Demo
               </a>
             </div>
           </div>

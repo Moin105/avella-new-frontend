@@ -3,26 +3,33 @@
 import type React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { RequestDemoModal } from "@/components/request-demo-modal"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 
 const NAV_LINKS = [
-  { id: "how-it-works", href: "#how-it-works", label: "How It Works" },
-  { id: "features", href: "#features", label: "Features" },
-  { id: "integrations", href: "#integrations", label: "Integrations" },
-  { id: "pricing", href: "#pricing", label: "Pricing" },
-  { id: "roi-calculator", href: "#roi-calculator", label: "ROI Calculator" },
+  { id: "how-it-works", href: "#how-it-works", label: "How It Works", type: "section" },
+  { id: "features", href: "#features", label: "Features", type: "section" },
+  { id: "integrations", href: "#integrations", label: "Integrations", type: "section" },
+  { id: "pricing", href: "/pricing", label: "Pricing", type: "route" },
+  { id: "roi-calculator", href: "#roi-calculator", label: "ROI Calculator", type: "section" },
 ] as const
 
 type NavLink = (typeof NAV_LINKS)[number]
 
+const SECTION_LINKS = NAV_LINKS.filter((link) => link.type === "section")
+
 export function Header() {
   const router = useRouter()
-  const [demoOpen, setDemoOpen] = useState(false)
   const [activeSection, setActiveSection] = useState<string | null>(null)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    if (pathname !== "/") {
+      setActiveSection(null)
+    }
+  }, [pathname])
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -45,7 +52,7 @@ export function Header() {
       },
     )
 
-    NAV_LINKS.forEach((link) => {
+    SECTION_LINKS.forEach((link) => {
       const element = document.getElementById(link.id)
       if (element) {
         observer.observe(element)
@@ -71,16 +78,25 @@ export function Header() {
   const handleNavClick = (event: React.MouseEvent<HTMLAnchorElement>, link: NavLink) => {
     event.preventDefault()
 
-    if (window.location.pathname === "/") {
+    if (link.type === "section") {
+      if (window.location.pathname === "/") {
+        const element = document.getElementById(link.id)
+        if (element) {
+          window.history.replaceState(null, "", link.href)
+          element.scrollIntoView({ behavior: "smooth", block: "start" })
+        }
+        return
+      }
+
+      router.push(`/${link.href}`)
       const element = document.getElementById(link.id)
       if (element) {
-        window.history.replaceState(null, "", link.href)
         element.scrollIntoView({ behavior: "smooth", block: "start" })
       }
       return
     }
 
-    router.push(`/${link.href}`)
+    router.push(link.href)
   }
 
   return (
@@ -103,11 +119,23 @@ export function Header() {
                   onClick={(event) => handleNavClick(event, link)}
                   className={cn(
                     "text-sm font-medium transition-colors",
-                    activeSection === link.id
+                    link.type === "section"
+                      ? activeSection === link.id
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                      : pathname === link.href
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground",
                   )}
-                  aria-current={activeSection === link.id ? "page" : undefined}
+                  aria-current={
+                    link.type === "section"
+                      ? activeSection === link.id
+                        ? "page"
+                        : undefined
+                      : pathname === link.href
+                        ? "page"
+                        : undefined
+                  }
                 >
                   {link.label}
                 </Link>
@@ -124,15 +152,19 @@ export function Header() {
               <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => router.push('/login')}>
                 Sign In
               </Button>
-              <Button size="sm" onClick={() => setDemoOpen(true)}>
-                Request Demo
+              <Button size="sm" asChild>
+                <a
+                  href="https://calendly.com/avellabooking-info/30min"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Book Demo
+                </a>
               </Button>
             </div>
           </div>
         </div>
       </header>
-
-      <RequestDemoModal open={demoOpen} onOpenChange={setDemoOpen} />
     </>
   )
 }
