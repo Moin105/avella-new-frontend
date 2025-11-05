@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Check, Phone } from "lucide-react"
 
@@ -46,8 +47,8 @@ export function Pricing() {
                 Our pricing is based on your business size, number of locations, and expected call volume. Most of our
                 clients see ROI within the first month.
               </p>
-              <Button size="lg" className="w-full">
-                Contact Us for Pricing
+              <Button asChild size="lg" className="w-full">
+                <Link href="/contact">Contact Us for Pricing</Link>
               </Button>
             </div>
           </div>
