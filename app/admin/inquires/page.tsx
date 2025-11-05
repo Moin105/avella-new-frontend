@@ -54,40 +54,6 @@ const statusStyles: Record<InquiryStatus, string> = {
   archived: 'bg-slate-100 text-slate-600 border border-slate-200',
 };
 
-const defaultFallbackInquiries: Inquiry[] = [
-  {
-    id: 'fallback-1',
-    first_name: 'Jordan',
-    last_name: 'Miles',
-    email: 'jordan.miles@example.com',
-    phone: '(555) 204-7821',
-    business_name: 'Studio One Beauty',
-    subject: 'Technical Support',
-    message:
-      'Our reception team would like to connect Avella AI with our existing booking system. Can you help us get started? ',
-    status: 'new',
-    source: 'contact_form',
-    created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    viewed_at: null,
-  },
-  {
-    id: 'fallback-2',
-    first_name: 'Danielle',
-    last_name: 'Hernandez',
-    email: 'danielle@redefineclinic.com',
-    phone: '(555) 993-4488',
-    business_name: 'Redefine Clinic',
-    subject: 'Pricing Inquiry',
-    message: 'Looking for enterprise pricing that covers two locations and 12 clinicians.',
-    status: 'responded',
-    source: 'contact_form',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-    viewed_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-  },
-];
-
 const formatDateTime = (value?: string | null) => {
   if (!value) return '—';
   const date = new Date(value);
@@ -122,7 +88,7 @@ export default function InquiresPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.get<Inquiry[]>('/admin/inquiries');
+      const response = await apiClient.get<Inquiry[]>('/admin/inquiries/');
       if (response.success && Array.isArray(response.data)) {
         setInquiries(response.data);
       } else {
@@ -130,8 +96,8 @@ export default function InquiresPage() {
       }
     } catch (err) {
       console.error('Failed to fetch inquiries:', err);
-      setError('Unable to load inquiries from the server. Displaying the latest available data.');
-      setInquiries(prev => (prev.length ? prev : defaultFallbackInquiries));
+      setError('Unable to load inquiries from the server. Please try again.');
+      setInquiries([]);
     } finally {
       setLoading(false);
     }
@@ -150,7 +116,7 @@ export default function InquiresPage() {
   const handleStatusChange = async (inquiryId: string, status: InquiryStatus) => {
     try {
       setUpdatingId(inquiryId);
-      const response = await apiClient.put(`/admin/inquiries/${inquiryId}/status`, { status });
+      const response = await apiClient.put(`/admin/inquiries/${inquiryId}/status/`, { status });
       if (!response.success) {
         throw new Error(response.error || 'Unable to update inquiry status');
       }
@@ -176,7 +142,7 @@ export default function InquiresPage() {
 
   const markAllAsReviewed = async () => {
     try {
-      const response = await apiClient.post('/admin/inquiries/mark-read');
+      const response = await apiClient.post('/admin/inquiries/mark-read/');
       if (!response.success) {
         throw new Error(response.error || 'Unable to mark inquiries as viewed');
       }

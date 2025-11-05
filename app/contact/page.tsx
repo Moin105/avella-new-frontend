@@ -70,7 +70,7 @@ export default function ContactPage() {
     }
 
     try {
-      const response = await apiClient.post("/contact", {
+      const response = await apiClient.post("/contact/", {
         first_name: formState.firstName,
         last_name: formState.lastName,
         email: formState.email,

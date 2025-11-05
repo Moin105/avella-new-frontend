@@ -139,21 +139,62 @@ class ApiClient {
   }
 
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+    const isEmpty = this.isEmptyResponse(response);
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(
-        errorData.detail || errorData.message || 'Request failed',
-        response.status,
-        errorData
-      );
+      const errorData = isEmpty ? {} : await this.safeParseJson(response);
+      const errorMessage =
+        typeof errorData === 'string'
+          ? errorData
+          : errorData?.detail || errorData?.message || 'Request failed';
+
+      throw new ApiError(errorMessage, response.status, errorData);
     }
 
-    const data = await response.json();
-    
-    // Apply timezone normalization to response data
+    if (isEmpty) {
+      return { data: null as T, success: true };
+    }
+
+    const data = await this.safeParseJson(response);
+
+    // Apply timezone normalization to response data when applicable
     const normalizedData = this.normalizeTimestampsInResponse(data);
-    
+
     return { data: normalizedData, success: true };
+  }
+
+  private isEmptyResponse(response: Response): boolean {
+    if (response.status === 204 || response.status === 205) {
+      return true;
+    }
+
+    const contentLength =
+      response.headers.get('content-length') || response.headers.get('Content-Length');
+
+    if (contentLength && Number(contentLength) === 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private async safeParseJson(response: Response): Promise<any> {
+    const text = await response.text();
+
+    if (!text) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      console.warn('API Client: Failed to parse JSON response', {
+        error,
+        text,
+        status: response.status,
+      });
+      return text;
+    }
   }
 
   /**
@@ -387,8 +428,15 @@ class ApiClient {
   }
 
   private getMockDataForEndpoint<T>(endpoint: string, method: string, data?: any): T {
+    const normalizedEndpoint = (() => {
+      if (endpoint === '/') {
+        return endpoint;
+      }
+      return endpoint.endsWith('/') ? endpoint.replace(/\/+$/, '') : endpoint;
+    })();
+
     // Auth endpoints
-    if (endpoint.includes('/auth/login')) {
+    if (normalizedEndpoint.includes('/auth/login')) {
       return {
         access_token: 'mock_access_token',
         refresh_token: 'mock_refresh_token',
@@ -401,7 +449,7 @@ class ApiClient {
       } as T;
     }
 
-    if (endpoint.includes('/auth/me')) {
+    if (normalizedEndpoint.includes('/auth/me')) {
       return {
         id: '1',
         email: 'user@example.com',
@@ -410,7 +458,7 @@ class ApiClient {
       } as T;
     }
 
-    if (endpoint.includes('/auth/register')) {
+    if (normalizedEndpoint.includes('/auth/register')) {
       return {
         message: 'Registration successful',
         user: {
@@ -422,7 +470,7 @@ class ApiClient {
       } as T;
     }
 
-    if (endpoint === '/contact' && method === 'POST') {
+    if (normalizedEndpoint === '/contact' && method === 'POST') {
       const timestamp = new Date().toISOString();
       const newInquiry = {
         id: `inq-${Math.random().toString(36).slice(2, 10)}`,
@@ -448,12 +496,12 @@ class ApiClient {
       } as T;
     }
 
-    if (endpoint.startsWith('/admin/inquiries')) {
+    if (normalizedEndpoint.startsWith('/admin/inquiries')) {
       if (method === 'GET') {
         return this.mockInquiries as T;
       }
 
-      if (method === 'POST' && endpoint.endsWith('/mark-read')) {
+      if (method === 'POST' && normalizedEndpoint.endsWith('/mark-read')) {
         const viewedAt = new Date().toISOString();
         this.mockInquiries = this.mockInquiries.map(inquiry =>
           inquiry.viewed_at
@@ -464,8 +512,8 @@ class ApiClient {
         return { message: 'Inquiries marked as viewed' } as T;
       }
 
-      if (method === 'PUT' && endpoint.includes('/status')) {
-        const parts = endpoint.split('/');
+      if (method === 'PUT' && normalizedEndpoint.includes('/status')) {
+        const parts = normalizedEndpoint.split('/');
         const inquiryId = parts[3];
         const updatedAt = new Date().toISOString();
         this.mockInquiries = this.mockInquiries.map(inquiry =>
@@ -489,7 +537,7 @@ class ApiClient {
     }
 
     // Dashboard endpoints
-    if (endpoint.includes('/dashboard/stats')) {
+    if (normalizedEndpoint.includes('/dashboard/stats')) {
       return {
         totalBookings: 45,
         todayBookings: 8,
@@ -499,7 +547,7 @@ class ApiClient {
       } as T;
     }
 
-    if (endpoint.includes('/bookings')) {
+    if (normalizedEndpoint.includes('/bookings')) {
       return [
         {
           id: '1',
@@ -522,7 +570,7 @@ class ApiClient {
       ] as T;
     }
 
-    if (endpoint.includes('/clients')) {
+    if (normalizedEndpoint.includes('/clients')) {
       return [
         {
           id: '1',
@@ -543,7 +591,7 @@ class ApiClient {
       ] as T;
     }
 
-    if (endpoint.includes('/barbers')) {
+    if (normalizedEndpoint.includes('/barbers')) {
       return [
         {
           id: '1',
@@ -564,7 +612,7 @@ class ApiClient {
       ] as T;
     }
 
-    if (endpoint.includes('/services')) {
+    if (normalizedEndpoint.includes('/services')) {
       return [
         {
           id: '1',
@@ -585,7 +633,7 @@ class ApiClient {
       ] as T;
     }
 
-    if (endpoint.includes('/appointments')) {
+    if (normalizedEndpoint.includes('/appointments')) {
       // Handle POST requests for creating appointments
       if (method === 'POST') {
         return {
@@ -665,7 +713,7 @@ class ApiClient {
       ] as T;
     }
 
-    if (endpoint.includes('/tenants/my')) {
+    if (normalizedEndpoint.includes('/tenants/my')) {
       return [
         {
           id: '1',
@@ -680,7 +728,7 @@ class ApiClient {
     }
 
     // Admin endpoints
-    if (endpoint.includes('/admin/metrics')) {
+    if (normalizedEndpoint.includes('/admin/metrics')) {
       return {
         totalUsers: 150,
         totalTenants: 25,
