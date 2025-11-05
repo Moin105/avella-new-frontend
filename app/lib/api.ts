@@ -139,21 +139,62 @@ class ApiClient {
   }
 
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+    const isEmpty = this.isEmptyResponse(response);
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(
-        errorData.detail || errorData.message || 'Request failed',
-        response.status,
-        errorData
-      );
+      const errorData = isEmpty ? {} : await this.safeParseJson(response);
+      const errorMessage =
+        typeof errorData === 'string'
+          ? errorData
+          : errorData?.detail || errorData?.message || 'Request failed';
+
+      throw new ApiError(errorMessage, response.status, errorData);
     }
 
-    const data = await response.json();
-    
-    // Apply timezone normalization to response data
+    if (isEmpty) {
+      return { data: null as T, success: true };
+    }
+
+    const data = await this.safeParseJson(response);
+
+    // Apply timezone normalization to response data when applicable
     const normalizedData = this.normalizeTimestampsInResponse(data);
-    
+
     return { data: normalizedData, success: true };
+  }
+
+  private isEmptyResponse(response: Response): boolean {
+    if (response.status === 204 || response.status === 205) {
+      return true;
+    }
+
+    const contentLength =
+      response.headers.get('content-length') || response.headers.get('Content-Length');
+
+    if (contentLength && Number(contentLength) === 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private async safeParseJson(response: Response): Promise<any> {
+    const text = await response.text();
+
+    if (!text) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      console.warn('API Client: Failed to parse JSON response', {
+        error,
+        text,
+        status: response.status,
+      });
+      return text;
+    }
   }
 
   /**
