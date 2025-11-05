@@ -63,7 +63,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     const fetchInquiryCount = async () => {
       try {
-        const response = await apiClient.get<InquirySummary[]>('/admin/inquiries');
+        const response = await apiClient.get<InquirySummary[]>('/admin/inquiries/');
         if (!isMounted || !response.success || !Array.isArray(response.data)) {
           return;
         }
