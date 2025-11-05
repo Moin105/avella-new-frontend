@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { apiClient } from "../lib/api"
 
 type FormState = {
   firstName: string
@@ -70,27 +69,41 @@ export default function ContactPage() {
     }
 
     try {
-      const response = await apiClient.post("/contact/", {
-        first_name: formState.firstName,
-        last_name: formState.lastName,
+      const payload = {
+        name: `${formState.firstName} ${formState.lastName}`.trim(),
         email: formState.email,
-        phone: formState.phone,
-        business_name: formState.businessName,
-        subject: formState.subject,
-        message: formState.message,
-        source: "contact_page",
+        phone: formState.phone || undefined,
+        businessType: formState.businessName || undefined,
+        message: formState.subject
+          ? `[${formState.subject}] ${formState.message}`
+          : formState.message,
+        source: "website",
+      }
+
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       })
 
-      if (response.success) {
-        setSubmissionStatus("success")
-        resetForm()
-        if (typeof window !== "undefined") {
-          localStorage.setItem("admin_inquiries_last_updated", new Date().toISOString())
+      if (response.ok) {
+        const result = await response.json()
+        if (result?.ok) {
+          setSubmissionStatus("success")
+          resetForm()
+          if (typeof window !== "undefined") {
+            localStorage.setItem("admin_inquiries_last_updated", new Date().toISOString())
+          }
+          return
         }
-      } else {
         setSubmissionStatus("error")
-        setSubmissionError(response.error || "We were unable to send your message. Please try again.")
+        setSubmissionError(result?.error || "We were unable to send your message. Please try again.")
+      } else {
+        const errorResponse = await response.json().catch(() => null)
+        setSubmissionStatus("error")
+        setSubmissionError(errorResponse?.error || "We were unable to send your message. Please try again.")
       }
+
     } catch (error) {
       console.error("Failed to submit contact form:", error)
       setSubmissionStatus("error")

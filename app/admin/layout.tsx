@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { Loader2, LogOut, User, Home, BarChart3, Zap, AlertTriangle, Users, Inbox } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { apiClient } from '../lib/api';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -13,8 +12,10 @@ interface AdminLayoutProps {
 
 interface InquirySummary {
   created_at?: string;
+  createdAt?: string;
   status?: string;
   viewed_at?: string | null;
+  viewedAt?: string | null;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -27,7 +28,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const navigationItems = [
     { href: '/admin', label: 'Dashboard', icon: Home },
     { href: '/admin/leads', label: 'Leads', icon: Users },
-    { href: '/admin/inquires', label: 'Inquires', icon: Inbox },
+    { href: '/admin/inquiries', label: 'Inquiries', icon: Inbox },
     { href: '/admin/metrics', label: 'Metrics', icon: BarChart3 },
     { href: '/admin/integrations', label: 'Integrations', icon: Zap },
     { href: '/admin/error-center', label: 'Error Center', icon: AlertTriangle },
@@ -63,19 +64,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     const fetchInquiryCount = async () => {
       try {
-        const response = await apiClient.get<InquirySummary[]>('/admin/inquiries/');
-        if (!isMounted || !response.success || !Array.isArray(response.data)) {
+        const response = await fetch('/api/inquiries', { cache: 'no-store' });
+        if (!isMounted || !response.ok) {
           return;
         }
 
-        const inquiries = response.data;
+        const payload = await response.json();
+        if (!Array.isArray(payload?.data)) {
+          return;
+        }
+
+        const inquiries = payload.data as InquirySummary[];
         const lastViewedRaw = window.localStorage.getItem('admin_inquiries_last_viewed');
         const lastViewed = parseDate(lastViewedRaw);
 
         const count = inquiries.reduce((total, inquiry) => {
-          const createdAt = parseDate(inquiry.created_at);
-          const viewedAt = parseDate(inquiry.viewed_at ?? null);
-          const status = (inquiry.status || '').toLowerCase();
+          const createdAt = parseDate(inquiry.created_at ?? inquiry.createdAt ?? null);
+          const viewedAt = parseDate(inquiry.viewed_at ?? inquiry.viewedAt ?? null);
+          const status = (inquiry.status || 'new').toLowerCase();
 
           if (!lastViewed) {
             return status === 'new' && !viewedAt ? total + 1 : total;
@@ -98,7 +104,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       }
     };
 
-    if (pathname.startsWith('/admin/inquires')) {
+    if (pathname.startsWith('/admin/inquiries')) {
       window.localStorage.setItem('admin_inquiries_last_viewed', new Date().toISOString());
       setNewInquiryCount(0);
     } else {
@@ -107,7 +113,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     const handleStorage = (event: StorageEvent) => {
       if (event.key === 'admin_inquiries_last_viewed' || event.key === 'admin_inquiries_last_updated') {
-        if (pathname.startsWith('/admin/inquires')) {
+        if (pathname.startsWith('/admin/inquiries')) {
           setNewInquiryCount(0);
         } else {
           fetchInquiryCount();
@@ -118,7 +124,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     window.addEventListener('storage', handleStorage);
 
     const interval = window.setInterval(() => {
-      if (!pathname.startsWith('/admin/inquires')) {
+      if (!pathname.startsWith('/admin/inquiries')) {
         fetchInquiryCount();
       }
     }, 60000);
@@ -155,7 +161,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   >
                     <Icon className="h-4 w-4 flex-shrink-0" />
                     <span className="flex-1 truncate">{item.label}</span>
-                    {item.href === '/admin/inquires' && newInquiryCount > 0 && (
+                    {item.href === '/admin/inquiries' && newInquiryCount > 0 && (
                       <span className="inline-flex min-w-[1.5rem] h-6 items-center justify-center rounded-full bg-red-500 px-2 text-xs font-semibold text-white">
                         {newInquiryCount > 99 ? '99+' : newInquiryCount}
                       </span>
@@ -231,7 +237,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
                   <span className="flex-1 truncate">{item.label}</span>
-                  {item.href === '/admin/inquires' && newInquiryCount > 0 && (
+                  {item.href === '/admin/inquiries' && newInquiryCount > 0 && (
                     <span className="inline-flex min-w-[1.5rem] h-6 items-center justify-center rounded-full bg-red-500 px-2 text-xs font-semibold text-white">
                       {newInquiryCount > 99 ? '99+' : newInquiryCount}
                     </span>
