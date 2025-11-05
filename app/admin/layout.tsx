@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { Loader2, LogOut, User, Home, BarChart3, Zap, AlertTriangle, Users, Inbox } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { apiClient } from '../lib/api';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -13,8 +12,10 @@ interface AdminLayoutProps {
 
 interface InquirySummary {
   created_at?: string;
+  createdAt?: string;
   status?: string;
   viewed_at?: string | null;
+  viewedAt?: string | null;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -63,19 +64,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     const fetchInquiryCount = async () => {
       try {
-        const response = await apiClient.get<InquirySummary[]>('/admin/inquiries/');
-        if (!isMounted || !response.success || !Array.isArray(response.data)) {
+        const response = await fetch('/api/inquiries', { cache: 'no-store' });
+        if (!isMounted || !response.ok) {
           return;
         }
 
-        const inquiries = response.data;
+        const payload = await response.json();
+        if (!Array.isArray(payload?.data)) {
+          return;
+        }
+
+        const inquiries = payload.data as InquirySummary[];
         const lastViewedRaw = window.localStorage.getItem('admin_inquiries_last_viewed');
         const lastViewed = parseDate(lastViewedRaw);
 
         const count = inquiries.reduce((total, inquiry) => {
-          const createdAt = parseDate(inquiry.created_at);
-          const viewedAt = parseDate(inquiry.viewed_at ?? null);
-          const status = (inquiry.status || '').toLowerCase();
+          const createdAt = parseDate(inquiry.created_at ?? inquiry.createdAt ?? null);
+          const viewedAt = parseDate(inquiry.viewed_at ?? inquiry.viewedAt ?? null);
+          const status = (inquiry.status || 'new').toLowerCase();
 
           if (!lastViewed) {
             return status === 'new' && !viewedAt ? total + 1 : total;

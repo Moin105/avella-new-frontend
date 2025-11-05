@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { apiClient } from '../../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
@@ -88,12 +87,38 @@ export default function InquiresPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.get<Inquiry[]>('/admin/inquiries/');
-      if (response.success && Array.isArray(response.data)) {
-        setInquiries(response.data);
-      } else {
-        throw new Error(response.error || 'Failed to load inquiries');
+      const response = await fetch('/api/inquiries', { cache: 'no-store' });
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        throw new Error(errorPayload?.error || 'Failed to load inquiries');
       }
+
+      const payload = await response.json();
+      if (!payload?.data || !Array.isArray(payload.data)) {
+        throw new Error('Invalid inquiries response');
+      }
+
+      const normalized: Inquiry[] = payload.data.map((item: any, index: number) => {
+        const name = typeof item?.name === 'string' ? item.name.trim() : '';
+        const [firstName, ...restName] = name.split(' ').filter(Boolean);
+        return {
+          id: String(item?._id ?? item?.id ?? `${item?.email ?? 'inquiry'}-${index}`),
+          first_name: item?.first_name ?? firstName ?? '',
+          last_name: item?.last_name ?? (restName.length ? restName.join(' ') : ''),
+          email: item?.email ?? '',
+          phone: item?.phone ?? null,
+          business_name: item?.businessType ?? item?.business_name ?? null,
+          subject: item?.subject ?? null,
+          message: item?.message ?? null,
+          status: (item?.status ?? 'new') as InquiryStatus,
+          source: item?.source ?? 'website',
+          created_at: item?.created_at ?? item?.createdAt ?? null,
+          updated_at: item?.updated_at ?? item?.updatedAt ?? item?.created_at ?? item?.createdAt ?? null,
+          viewed_at: item?.viewed_at ?? null,
+        };
+      });
+
+      setInquiries(normalized);
     } catch (err) {
       console.error('Failed to fetch inquiries:', err);
       setError('Unable to load inquiries from the server. Please try again.');
@@ -116,10 +141,6 @@ export default function InquiresPage() {
   const handleStatusChange = async (inquiryId: string, status: InquiryStatus) => {
     try {
       setUpdatingId(inquiryId);
-      const response = await apiClient.put(`/admin/inquiries/${inquiryId}/status/`, { status });
-      if (!response.success) {
-        throw new Error(response.error || 'Unable to update inquiry status');
-      }
       setInquiries(prev =>
         prev.map(inquiry =>
           inquiry.id === inquiryId
@@ -134,31 +155,22 @@ export default function InquiresPage() {
       );
     } catch (err) {
       console.error('Failed to update inquiry status:', err);
-      setError('Unable to update the inquiry right now. Please try again.');
     } finally {
       setUpdatingId(null);
     }
   };
 
   const markAllAsReviewed = async () => {
-    try {
-      const response = await apiClient.post('/admin/inquiries/mark-read/');
-      if (!response.success) {
-        throw new Error(response.error || 'Unable to mark inquiries as viewed');
-      }
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('admin_inquiries_last_viewed', new Date().toISOString());
-      }
-      setInquiries(prev =>
-        prev.map(inquiry =>
-          inquiry.status === 'new' && !inquiry.viewed_at
-            ? { ...inquiry, viewed_at: new Date().toISOString() }
-            : inquiry
-        )
-      );
-    } catch (err) {
-      console.error('Failed to mark inquiries as viewed:', err);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('admin_inquiries_last_viewed', new Date().toISOString());
     }
+    setInquiries(prev =>
+      prev.map(inquiry =>
+        inquiry.status === 'new' && !inquiry.viewed_at
+          ? { ...inquiry, viewed_at: new Date().toISOString() }
+          : inquiry
+      )
+    );
   };
 
   const filteredInquiries = useMemo(() => {
