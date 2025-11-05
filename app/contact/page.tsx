@@ -59,7 +59,7 @@ export default function ContactPage() {
                       <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="demo">Request a Demo</SelectItem>
+                      <SelectItem value="demo">Book Demo</SelectItem>
                       <SelectItem value="pricing">Pricing Inquiry</SelectItem>
                       <SelectItem value="support">Technical Support</SelectItem>
                       <SelectItem value="partnership">Partnership Opportunity</SelectItem>

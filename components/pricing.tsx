@@ -3,7 +3,7 @@ import { Check, Phone } from "lucide-react"
 
 export function Pricing() {
   return (
-    <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
+    <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
       <div className="container mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4 text-balance">
