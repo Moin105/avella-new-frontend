@@ -387,8 +387,15 @@ class ApiClient {
   }
 
   private getMockDataForEndpoint<T>(endpoint: string, method: string, data?: any): T {
+    const normalizedEndpoint = (() => {
+      if (endpoint === '/') {
+        return endpoint;
+      }
+      return endpoint.endsWith('/') ? endpoint.replace(/\/+$/, '') : endpoint;
+    })();
+
     // Auth endpoints
-    if (endpoint.includes('/auth/login')) {
+    if (normalizedEndpoint.includes('/auth/login')) {
       return {
         access_token: 'mock_access_token',
         refresh_token: 'mock_refresh_token',
@@ -401,7 +408,7 @@ class ApiClient {
       } as T;
     }
 
-    if (endpoint.includes('/auth/me')) {
+    if (normalizedEndpoint.includes('/auth/me')) {
       return {
         id: '1',
         email: 'user@example.com',
@@ -410,7 +417,7 @@ class ApiClient {
       } as T;
     }
 
-    if (endpoint.includes('/auth/register')) {
+    if (normalizedEndpoint.includes('/auth/register')) {
       return {
         message: 'Registration successful',
         user: {
@@ -422,7 +429,7 @@ class ApiClient {
       } as T;
     }
 
-    if (endpoint === '/contact' && method === 'POST') {
+    if (normalizedEndpoint === '/contact' && method === 'POST') {
       const timestamp = new Date().toISOString();
       const newInquiry = {
         id: `inq-${Math.random().toString(36).slice(2, 10)}`,
@@ -448,12 +455,12 @@ class ApiClient {
       } as T;
     }
 
-    if (endpoint.startsWith('/admin/inquiries')) {
+    if (normalizedEndpoint.startsWith('/admin/inquiries')) {
       if (method === 'GET') {
         return this.mockInquiries as T;
       }
 
-      if (method === 'POST' && endpoint.endsWith('/mark-read')) {
+      if (method === 'POST' && normalizedEndpoint.endsWith('/mark-read')) {
         const viewedAt = new Date().toISOString();
         this.mockInquiries = this.mockInquiries.map(inquiry =>
           inquiry.viewed_at
@@ -464,8 +471,8 @@ class ApiClient {
         return { message: 'Inquiries marked as viewed' } as T;
       }
 
-      if (method === 'PUT' && endpoint.includes('/status')) {
-        const parts = endpoint.split('/');
+      if (method === 'PUT' && normalizedEndpoint.includes('/status')) {
+        const parts = normalizedEndpoint.split('/');
         const inquiryId = parts[3];
         const updatedAt = new Date().toISOString();
         this.mockInquiries = this.mockInquiries.map(inquiry =>
@@ -489,7 +496,7 @@ class ApiClient {
     }
 
     // Dashboard endpoints
-    if (endpoint.includes('/dashboard/stats')) {
+    if (normalizedEndpoint.includes('/dashboard/stats')) {
       return {
         totalBookings: 45,
         todayBookings: 8,
@@ -499,7 +506,7 @@ class ApiClient {
       } as T;
     }
 
-    if (endpoint.includes('/bookings')) {
+    if (normalizedEndpoint.includes('/bookings')) {
       return [
         {
           id: '1',
@@ -522,7 +529,7 @@ class ApiClient {
       ] as T;
     }
 
-    if (endpoint.includes('/clients')) {
+    if (normalizedEndpoint.includes('/clients')) {
       return [
         {
           id: '1',
@@ -543,7 +550,7 @@ class ApiClient {
       ] as T;
     }
 
-    if (endpoint.includes('/barbers')) {
+    if (normalizedEndpoint.includes('/barbers')) {
       return [
         {
           id: '1',
@@ -564,7 +571,7 @@ class ApiClient {
       ] as T;
     }
 
-    if (endpoint.includes('/services')) {
+    if (normalizedEndpoint.includes('/services')) {
       return [
         {
           id: '1',
@@ -585,7 +592,7 @@ class ApiClient {
       ] as T;
     }
 
-    if (endpoint.includes('/appointments')) {
+    if (normalizedEndpoint.includes('/appointments')) {
       // Handle POST requests for creating appointments
       if (method === 'POST') {
         return {
@@ -665,7 +672,7 @@ class ApiClient {
       ] as T;
     }
 
-    if (endpoint.includes('/tenants/my')) {
+    if (normalizedEndpoint.includes('/tenants/my')) {
       return [
         {
           id: '1',
@@ -680,7 +687,7 @@ class ApiClient {
     }
 
     // Admin endpoints
-    if (endpoint.includes('/admin/metrics')) {
+    if (normalizedEndpoint.includes('/admin/metrics')) {
       return {
         totalUsers: 150,
         totalTenants: 25,
