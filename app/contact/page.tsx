@@ -9,11 +9,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { submitInquiry } from "@/src/routes/inquiries"
 
 type FormState = {
   firstName: string
   lastName: string
-  email: string
   phone: string
   businessName: string
   subject: string
@@ -23,7 +23,6 @@ type FormState = {
 const defaultFormState: FormState = {
   firstName: "",
   lastName: "",
-  email: "",
   phone: "",
   businessName: "",
   subject: "",
@@ -69,45 +68,35 @@ export default function ContactPage() {
     }
 
     try {
-      const payload = {
-        name: `${formState.firstName} ${formState.lastName}`.trim(),
-        email: formState.email,
+      const name = `${formState.firstName} ${formState.lastName}`.trim()
+      const message = (formState.subject
+        ? `[${formState.subject}] ${formState.message}`
+        : formState.message
+      ).trim()
+
+      const result = await submitInquiry({
+        name: name || undefined,
         phone: formState.phone || undefined,
         businessType: formState.businessName || undefined,
-        message: formState.subject
-          ? `[${formState.subject}] ${formState.message}`
-          : formState.message,
-        source: "website",
-      }
-
-      const response = await fetch("/api/inquiries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        message: message || undefined,
+        source: "contact_form",
       })
 
-      if (response.ok) {
-        const result = await response.json()
-        if (result?.ok) {
-          setSubmissionStatus("success")
-          resetForm()
-          if (typeof window !== "undefined") {
-            localStorage.setItem("admin_inquiries_last_updated", new Date().toISOString())
-          }
-          return
+      if (result?.ok) {
+        setSubmissionStatus("success")
+        resetForm()
+        if (typeof window !== "undefined") {
+          localStorage.setItem("admin_inquiries_last_updated", new Date().toISOString())
         }
-        setSubmissionStatus("error")
-        setSubmissionError(result?.error || "We were unable to send your message. Please try again.")
-      } else {
-        const errorResponse = await response.json().catch(() => null)
-        setSubmissionStatus("error")
-        setSubmissionError(errorResponse?.error || "We were unable to send your message. Please try again.")
+        return
       }
 
+      setSubmissionStatus("error")
+      setSubmissionError(result?.error || "We were unable to send your message. Please try again.")
     } catch (error) {
       console.error("Failed to submit contact form:", error)
       setSubmissionStatus("error")
-      setSubmissionError("We were unable to send your message. Please try again.")
+      setSubmissionError((error as Error)?.message || "We were unable to send your message. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -155,19 +144,6 @@ export default function ContactPage() {
                       autoComplete="family-name"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="john@example.com"
-                    required
-                    value={formState.email}
-                    onChange={handleInputChange("email")}
-                    autoComplete="email"
-                  />
                 </div>
 
                 <div className="space-y-2">
