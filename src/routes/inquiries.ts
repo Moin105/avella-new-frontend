@@ -1,29 +1,61 @@
-import { Router } from "express";
-import { Inquiry } from "../models/Inquiry";
+export type InquiryInput = {
+  name?: string;
+  phone?: string;
+  businessType?: string;
+  message?: string;
+  source?: string;
+};
 
-const router = Router();
+export type Inquiry = {
+  _id: string;
+  name?: string;
+  phone?: string;
+  businessType?: string;
+  message?: string;
+  createdAt?: string;
+};
 
-// Core handler used by both paths
-async function createInquiry(req: any, res: any) {
-  try {
-    const { name, email, phone, businessType, message, source = "website" } = req.body || {};
-    if (!name || !email) return res.status(400).json({ error: "name and email required" });
-    const doc = await Inquiry.create({ name, email, phone, businessType, message, source });
-    return res.status(201).json({ ok: true, id: String(doc._id) });
-  } catch (e) {
-    return res.status(500).json({ error: "failed to save inquiry" });
+export async function submitInquiry(payload: InquiryInput) {
+  const res = await fetch('/api/inquiries', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error || `submit_inquiry_failed_${res.status}`);
   }
+  return res.json();
 }
 
-// POST /v1/inquiries  -> create inquiry
-router.post("/v1/inquiries", createInquiry);
-// Alias for common misspelling: POST /v1/inquires -> same behavior
-router.post("/v1/inquires", createInquiry);
+type InquiriesResponse = {
+  ok?: boolean;
+  error?: string;
+  items?: any[];
+};
 
-// GET /v1/inquiries  -> list latest for admin
-router.get("/v1/inquiries", async (_req, res) => {
-  const rows = await Inquiry.find().sort({ createdAt: -1 }).limit(500).lean();
-  return res.json({ ok: true, data: rows });
-});
+export async function listInquiries(): Promise<Inquiry[]> {
+  const load = async () => {
+    if (typeof window === 'undefined') {
+      const { GET } = await import('@/app/api/inquiries/route');
+      return GET();
+    }
+    return fetch('/api/inquiries', { cache: 'no-store' });
+  };
 
-export default router;
+  const res = await load();
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({} as InquiriesResponse));
+    throw new Error(err?.error || `list_inquiries_failed_${res.status}`);
+  }
+
+  const json = (await res.json().catch(() => ({}))) as InquiriesResponse;
+  return (json?.items || []).map((it: any) => ({
+    _id: it._id?.toString?.() ?? it._id,
+    name: it.name,
+    phone: it.phone,
+    businessType: it.businessType,
+    message: it.message,
+    createdAt: it.createdAt,
+  }));
+}
