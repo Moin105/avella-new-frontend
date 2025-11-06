@@ -79,7 +79,7 @@ export default function ContactPage() {
         phone: formState.phone || undefined,
         businessType: formState.businessName || undefined,
         message: message || undefined,
-        source: "contact_form",
+        source: "contact_page",
       })
 
       if (result?.ok) {
