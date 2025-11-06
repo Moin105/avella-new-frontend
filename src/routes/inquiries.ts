@@ -20,3 +20,27 @@ export async function submitInquiry(payload: InquiryPayload) {
   }
   return res.json();
 }
+
+export type Inquiry = {
+  _id?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  message: string;
+  source?: string;
+  createdAt?: string;
+  status?: 'new' | 'read' | 'archived';
+};
+
+export async function fetchInquiries(params: { status?: string } = {}) {
+  const qs = new URLSearchParams(params as Record<string, string>).toString();
+  const url = `/api/inquiries${qs ? `?${qs}` : ''}`;
+
+  const res = await fetch(url, { method: 'GET', cache: 'no-store' });
+  if (!res.ok) throw new Error(`Failed to fetch inquiries: ${res.status}`);
+  const data = await res.json();
+  return (data?.inquiries ?? []) as Inquiry[];
+}
+
+// Back-compat so existing imports keep working:
+export const listInquiries = fetchInquiries;
