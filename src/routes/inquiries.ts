@@ -28,13 +28,28 @@ export async function submitInquiry(payload: InquiryInput) {
   return res.json();
 }
 
+type InquiriesResponse = {
+  ok?: boolean;
+  error?: string;
+  items?: any[];
+};
+
 export async function listInquiries(): Promise<Inquiry[]> {
-  const res = await fetch('/api/inquiries', { cache: 'no-store' });
+  const load = async () => {
+    if (typeof window === 'undefined') {
+      const { GET } = await import('@/app/api/inquiries/route');
+      return GET();
+    }
+    return fetch('/api/inquiries', { cache: 'no-store' });
+  };
+
+  const res = await load();
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
+    const err = await res.json().catch(() => ({} as InquiriesResponse));
     throw new Error(err?.error || `list_inquiries_failed_${res.status}`);
   }
-  const json = await res.json();
+
+  const json = (await res.json().catch(() => ({}))) as InquiriesResponse;
   return (json?.items || []).map((it: any) => ({
     _id: it._id?.toString?.() ?? it._id,
     name: it.name,
