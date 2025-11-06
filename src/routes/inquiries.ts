@@ -28,6 +28,7 @@ export type Inquiry = {
   phone?: string;
   message: string;
   source?: string;
+  businessType?: string;
   createdAt?: string;
   status?: 'new' | 'read' | 'archived';
 };

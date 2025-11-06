@@ -22,13 +22,14 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const doc = {
-      // no email field at all
-      name: clean(body?.name),                 // optional
-      phone: clean(body?.phone),               // optional
-      businessType: clean(body?.businessType), // optional
-      message: clean(body?.message),           // optional
-      source: clean(body?.source || 'site'),
-      createdAt: new Date(),
+      name: clean(body?.name),
+      email: clean(body?.email) || null,
+      phone: clean(body?.phone),
+      businessType: clean(body?.businessType) || null,
+      message: clean(body?.message),
+      source: clean(body?.source) || 'site',
+      createdAt: new Date().toISOString(),
+      status: 'new' as const,
     };
     // Require at least one non-empty lead field
     const hasContent = !!(doc.name || doc.phone || doc.businessType || doc.message);
@@ -49,13 +50,12 @@ export async function GET() {
   try {
     const client = await getClient();
     const col = client.db(process.env.DB_NAME || 'site').collection('inquiries');
-    const items = await col
-      .find({})
-      .project({ name: 1, phone: 1, businessType: 1, message: 1, createdAt: 1 })
+    const inquiries = await col
+      .find({}, { projection: { name: 1, email: 1, phone: 1, businessType: 1, message: 1, source: 1, status: 1, createdAt: 1 } })
       .sort({ createdAt: -1 })
       .limit(500)
       .toArray();
-    return NextResponse.json({ ok: true, items });
+    return NextResponse.json({ ok: true, inquiries });
   } catch (err) {
     console.error('GET /api/inquiries failed', err);
     return NextResponse.json({ ok: false, error: 'server_error' }, { status: 500 });
