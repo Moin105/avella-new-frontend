@@ -1,5 +1,5 @@
 import React from 'react';
-import { listInquiries } from '@/src/routes/inquiries';
+import { listInquiries } from '@/src/lib/inquiriesClient';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminInquiresPage() {
